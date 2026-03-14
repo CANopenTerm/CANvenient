@@ -1,0 +1,5 @@
+.vs
+deps*
+out
+build
+tmp
