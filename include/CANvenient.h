@@ -13,11 +13,6 @@
 
 #ifdef _WIN32
 #define CANVENIENT_API __declspec(dllexport)
-#elif __linux__
-#define CANVENIENT_API __attribute__((visibility("default")))
-#endif
-
-#ifdef _WIN32
 
 #include <limits.h>
 
@@ -53,6 +48,10 @@ typedef unsigned __int64 u64;
 typedef unsigned long long u64;
 #endif
 
+#elif __linux__
+#define CANVENIENT_API __attribute__((visibility("default")))
+#endif
+
 /* CAN message flags */
 #define CAN_MSG_FLAG_FD 0x01  /* CAN FD frame */
 #define CAN_MSG_FLAG_BRS 0x02 /* Bit rate switch (CAN FD) */
@@ -60,6 +59,12 @@ typedef unsigned long long u64;
 #define CAN_MSG_FLAG_RTR 0x08 /* Remote transmission request */
 #define CAN_MSG_FLAG_EXT 0x10 /* Extended frame format (29-bit ID) */
 
+#ifndef _UAPI_CAN_NETLINK_H
+#define _UAPI_CAN_NETLINK_H
+
+/*
+ * CAN message frame.
+ */
 struct can_frame
 {
     u64 timestamp;  /* Timestamp in microseconds */
@@ -90,9 +95,9 @@ struct can_bittiming
 };
 
 /*
- * CAN harware-dependent bit-timing constant.
+ * CAN harware-dependent bit-timing constant
  *
- * Used for calculating and checking bit-timing parameters.
+ * Used for calculating and checking bit-timing parameters
  */
 struct can_bittiming_const
 {
@@ -108,7 +113,7 @@ struct can_bittiming_const
 };
 
 /*
- * CAN clock parameters.
+ * CAN clock parameters
  */
 struct can_clock
 {
@@ -116,7 +121,7 @@ struct can_clock
 };
 
 /*
- * CAN operational and error states.
+ * CAN operational and error states
  */
 enum can_state
 {
@@ -130,7 +135,7 @@ enum can_state
 };
 
 /*
- * CAN bus error counters.
+ * CAN bus error counters
  */
 struct can_berr_counter
 {
@@ -139,7 +144,7 @@ struct can_berr_counter
 };
 
 /*
- * CAN controller mode.
+ * CAN controller mode
  */
 struct can_ctrlmode
 {
@@ -156,7 +161,7 @@ struct can_ctrlmode
 #define CAN_CTRLMODE_PRESUME_ACK 0x40    /* Ignore missing CAN ACKs */
 
 /*
- * CAN device statistics.
+ * CAN device statistics
  */
 struct can_device_stats
 {
@@ -169,17 +174,31 @@ struct can_device_stats
 };
 
 /*
- * Forward declaration for rtnetlink statistics.
+ * CAN netlink interface
  */
-struct rtnl_link_stats64;
+enum
+{
+    IFLA_CAN_UNSPEC,
+    IFLA_CAN_BITTIMING,
+    IFLA_CAN_BITTIMING_CONST,
+    IFLA_CAN_CLOCK,
+    IFLA_CAN_STATE,
+    IFLA_CAN_CTRLMODE,
+    IFLA_CAN_RESTART_MS,
+    IFLA_CAN_RESTART,
+    IFLA_CAN_BERR_COUNTER,
+    IFLA_CAN_DATA_BITTIMING,
+    IFLA_CAN_DATA_BITTIMING_CONST,
+    __IFLA_CAN_MAX
+};
 
-#endif /* _WIN32 */
+#define IFLA_CAN_MAX (__IFLA_CAN_MAX - 1)
 
-#ifdef _WIN32
-/*
- * Network interface statistics (Windows-compatible definition).
- * Normally defined in <linux/if_link.h> on Linux.
- */
+#endif /* _UAPI_CAN_NETLINK_H */
+
+#ifdef __linux__
+struct rtnl_link_stats64; /* from <linux/if_link.h> */
+#else
 struct rtnl_link_stats64
 {
     u32 rx_packets;
@@ -206,32 +225,10 @@ struct rtnl_link_stats64
     u32 rx_compressed;
     u32 tx_compressed;
 };
-#elif __linux__
-#include <linux/if_link.h>
 #endif
 
-#ifdef _WIN32
-
-/*
- * CAN netlink interface.
- */
-enum
-{
-    IFLA_CAN_UNSPEC,
-    IFLA_CAN_BITTIMING,
-    IFLA_CAN_BITTIMING_CONST,
-    IFLA_CAN_CLOCK,
-    IFLA_CAN_STATE,
-    IFLA_CAN_CTRLMODE,
-    IFLA_CAN_RESTART_MS,
-    IFLA_CAN_RESTART,
-    IFLA_CAN_BERR_COUNTER,
-    IFLA_CAN_DATA_BITTIMING,
-    IFLA_CAN_DATA_BITTIMING_CONST,
-    __IFLA_CAN_MAX
-};
-
-#define IFLA_CAN_MAX (__IFLA_CAN_MAX - 1)
+#ifndef _socketcan_netlink_h
+#define _socketcan_netlink_h
 
 /* libsocketcan compatible API. */
 CANVENIENT_API int can_do_restart(const char* name);
@@ -258,7 +255,7 @@ CANVENIENT_API int can_get_berr_counter(const char* name, struct can_berr_counte
 CANVENIENT_API int can_get_device_stats(const char* name, struct can_device_stats* cds);
 CANVENIENT_API int can_get_link_stats(const char* name, struct rtnl_link_stats64* rls);
 
-#endif /* _WIN32 */
+#endif /* _socketcan_netlink_h */
 
 /* CANvenient-specific API. */
 CANVENIENT_API int can_find_id(int* id, const char* name);
