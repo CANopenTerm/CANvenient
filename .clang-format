@@ -28,7 +28,7 @@ IndentCaseLabels: true
 IndentWidth: 4
 MaxEmptyLinesToKeep: 1
 PointerAlignment: Left
-SortIncludes: true
+SortIncludes: false
 SpaceAfterLogicalNot: true
 SpaceBeforeAssignmentOperators: true
 SpacesInParentheses: false
