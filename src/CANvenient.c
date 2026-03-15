@@ -24,6 +24,8 @@
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
+
+static int can_socket[];
 #endif
 
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
@@ -80,8 +82,8 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         /* Set interface properties */
         (*iface)[i].id = pcan_ch_info[i].device_id;
         (*iface)[i].vendor = CAN_VENDOR_PEAK;
-        (*iface)[iface_count].opened = 0;
-        (*iface)[iface_count].baudrate = CAN_BAUD_1M;
+        (*iface)[i].opened = 0;
+        (*iface)[i].baudrate = CAN_BAUD_1M;
     }
 
     *count = (int)pcan_ch_count;
@@ -229,6 +231,9 @@ CANVENIENT_API int can_open(struct can_iface* iface)
         default:
             return -1;
     }
+
+#elif defined __linux__
+
 #endif
 
     return 0;
@@ -257,6 +262,9 @@ CANVENIENT_API void can_close(struct can_iface* iface)
     }
 
     iface->opened = 0;
+
+#elif defined __linux__
+
 #endif
 }
 
