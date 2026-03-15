@@ -68,8 +68,7 @@ enum can_vendor
 {
     CAN_VENDOR_SOCKETCAN = 0,
     CAN_VENDOR_PEAK = 1,
-    CAN_VENDOR_IXXAT = 2,
-    CAN_VENDOR_KVASER = 3
+    CAN_VENDOR_IXXAT = 2
 };
 
 /*

@@ -16,6 +16,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <vcisdk.h>
 #include <PCANBasic.h>
 
 #elif defined __linux__
@@ -29,23 +30,24 @@
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
 {
 #ifdef _WIN32
-    u32 pcan_ch_count = 0;
+    u32 ch_count = 0;
     TPCANChannelInformation* pcan_ch_info;
     TPCANStatus pcan_status;
 
-    pcan_status = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS_COUNT, &pcan_ch_count, sizeof(u32));
-    if (PCAN_ERROR_OK != pcan_status || 0 == pcan_ch_count)
+    /* PEAK-System. */
+    pcan_status = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS_COUNT, &ch_count, sizeof(u32));
+    if (PCAN_ERROR_OK != pcan_status || 0 == ch_count)
     {
         return -1;
     }
 
-    pcan_ch_info = (TPCANChannelInformation*)malloc(sizeof(TPCANChannelInformation) * pcan_ch_count);
+    pcan_ch_info = (TPCANChannelInformation*)malloc(sizeof(TPCANChannelInformation) * ch_count);
     if (NULL == pcan_ch_info)
     {
         return -1;
     }
 
-    pcan_status = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS, pcan_ch_info, sizeof(TPCANChannelInformation) * pcan_ch_count);
+    pcan_status = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS, pcan_ch_info, sizeof(TPCANChannelInformation) * ch_count);
     if (PCAN_ERROR_OK != pcan_status)
     {
         free(pcan_ch_info);
@@ -53,14 +55,14 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         return -1;
     }
 
-    *iface = (struct can_iface*)malloc(sizeof(struct can_iface) * pcan_ch_count);
+    *iface = (struct can_iface*)malloc(sizeof(struct can_iface) * ch_count);
     if (NULL == *iface)
     {
         free(pcan_ch_info);
         return -1;
     }
 
-    for (u32 i = 0; i < pcan_ch_count; i++)
+    for (u32 i = 0; i < ch_count; i++)
     {
         (*iface)[i].id = pcan_ch_info[i].channel_handle;
         (*iface)[i].name = (char*)malloc(strlen(pcan_ch_info[i].device_name) + 1);
@@ -84,7 +86,10 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         (*iface)[i].baudrate = CAN_BAUD_1M;
     }
 
-    *count = (int)pcan_ch_count;
+    /* Ixxat. */
+    /* Tbd. */
+
+    *count = (int)ch_count;
     free(pcan_ch_info);
     return 0;
 
@@ -225,7 +230,6 @@ CANVENIENT_API int can_open(struct can_iface* iface)
             break;
         }
         case CAN_VENDOR_IXXAT:
-        case CAN_VENDOR_KVASER:
         default:
             return -1;
     }
@@ -254,7 +258,9 @@ CANVENIENT_API void can_close(struct can_iface* iface)
             break;
         }
         case CAN_VENDOR_IXXAT:
-        case CAN_VENDOR_KVASER:
+        {
+            break;
+        }
         default:
             break;
     }
