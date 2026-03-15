@@ -91,21 +91,7 @@ CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count)
 {
     for (int i = 0; i < count; i++)
     {
-        if (iface[i]->opened)
-        {
-            switch (iface[i]->vendor)
-            {
-                case CAN_VENDOR_PEAK:
-                {
-                    CAN_Uninitialize((WORD)iface[i]->id);
-                    iface[i]->opened = 0;
-                    break;
-                }
-                default:
-                    break;
-            }
-        }
-
+        can_close(iface[i]);
         if (iface[i] != NULL)
         {
             free(iface[i]->name);
@@ -114,23 +100,25 @@ CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count)
     free(*iface);
 }
 
-CANVENIENT_API int can_open(struct can_iface iface)
+CANVENIENT_API int can_open(struct can_iface* iface)
 {
-    if (NULL == iface.name)
+    if (NULL == iface->name)
     {
         return -1;
     }
 
-    switch (iface.vendor)
+    switch (iface->vendor)
     {
         case CAN_VENDOR_PEAK:
         {
-            if (PCAN_ERROR_OK == CAN_Initialize((WORD)iface.id, iface.baudrate, 0, 0, 0))
+            if (PCAN_ERROR_OK == CAN_Initialize((WORD)iface->id, iface->baudrate, 0, 0, 0))
             {
-                iface.opened = 1;
+                iface->opened = 1;
             }
             break;
         }
+        case CAN_VENDOR_IXXAT:
+        case CAN_VENDOR_KVASER:
         default:
             return -1;
     }
@@ -138,26 +126,38 @@ CANVENIENT_API int can_open(struct can_iface iface)
     return 0;
 }
 
-CANVENIENT_API int can_open_fd(struct can_iface iface)
+CANVENIENT_API int can_open_fd(struct can_iface* iface)
 {
     (void)iface;
     return 0;
 }
 
-CANVENIENT_API int can_close(struct can_iface iface)
+CANVENIENT_API void can_close(struct can_iface* iface)
 {
-    (void)iface;
-    return 0;
+    switch (iface->vendor)
+    {
+        case CAN_VENDOR_PEAK:
+        {
+            CAN_Uninitialize((WORD)iface->id);
+            break;
+        }
+        case CAN_VENDOR_IXXAT:
+        case CAN_VENDOR_KVASER:
+        default:
+            break;
+    }
+
+    iface->opened = 0;
 }
 
-CANVENIENT_API int can_send(struct can_iface iface, struct can_frame* frame)
+CANVENIENT_API int can_send(struct can_iface* iface, struct can_frame* frame)
 {
     (void)iface;
     (void)frame;
     return 0;
 }
 
-CANVENIENT_API int can_recv(struct can_iface iface, struct can_frame* frame)
+CANVENIENT_API int can_recv(struct can_iface* iface, struct can_frame* frame)
 {
     (void)iface;
     (void)frame;

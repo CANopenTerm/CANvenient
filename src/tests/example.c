@@ -32,7 +32,7 @@ int main()
                 printf("[%d] %s ->", i, iface[i]->name);
                 iface[i]->baudrate = CAN_BAUD_250K;
 
-                if (0 == can_open(*iface[i]))
+                if (0 == can_open(iface[i]))
                 {
                     printf(" opened\n");
                 }

@@ -64,7 +64,9 @@ typedef __u32 u32;
  */
 enum can_vendor
 {
-    CAN_VENDOR_PEAK = 0
+    CAN_VENDOR_PEAK = 0,
+    CAN_VENDOR_IXXAT = 1,
+    CAN_VENDOR_KVASER = 2
 };
 
 /*
@@ -116,11 +118,11 @@ struct can_frame
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count);
 CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count);
 
-CANVENIENT_API int can_open(struct can_iface iface);
-CANVENIENT_API int can_open_fd(struct can_iface iface);
-CANVENIENT_API int can_close(struct can_iface iface);
+CANVENIENT_API int can_open(struct can_iface* iface);
+CANVENIENT_API int can_open_fd(struct can_iface* iface);
+CANVENIENT_API void can_close(struct can_iface* iface);
 
-CANVENIENT_API int can_send(struct can_iface iface, struct can_frame* frame);
-CANVENIENT_API int can_recv(struct can_iface iface, struct can_frame* frame);
+CANVENIENT_API int can_send(struct can_iface* iface, struct can_frame* frame);
+CANVENIENT_API int can_recv(struct can_iface* iface, struct can_frame* frame);
 
 #endif /* CANVENIENT_H */
