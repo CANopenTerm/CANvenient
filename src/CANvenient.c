@@ -24,8 +24,6 @@
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
-
-static int can_socket[];
 #endif
 
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
