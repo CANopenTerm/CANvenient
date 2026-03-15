@@ -9,12 +9,6 @@
  **/
 
 #include <CANvenient.h>
-
-#ifdef _WIN32
-#elif __linux__
-#include <socketecan.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 

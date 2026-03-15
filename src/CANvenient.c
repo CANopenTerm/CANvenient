@@ -81,7 +81,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
     return 0;
 
 #else
-    (void)names;
+    (void)iface;
     (void)count;
     return -1;
 #endif
@@ -107,6 +107,7 @@ CANVENIENT_API int can_open(struct can_iface* iface)
         return -1;
     }
 
+#ifdef _WIN32
     switch (iface->vendor)
     {
         case CAN_VENDOR_PEAK:
@@ -122,6 +123,7 @@ CANVENIENT_API int can_open(struct can_iface* iface)
         default:
             return -1;
     }
+#endif
 
     return 0;
 }
@@ -134,6 +136,7 @@ CANVENIENT_API int can_open_fd(struct can_iface* iface)
 
 CANVENIENT_API void can_close(struct can_iface* iface)
 {
+#ifdef _WIN32
     switch (iface->vendor)
     {
         case CAN_VENDOR_PEAK:
@@ -148,6 +151,7 @@ CANVENIENT_API void can_close(struct can_iface* iface)
     }
 
     iface->opened = 0;
+#endif
 }
 
 CANVENIENT_API int can_send(struct can_iface* iface, struct can_frame* frame)
