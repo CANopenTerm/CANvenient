@@ -242,20 +242,24 @@ CANVENIENT_API int can_get_link_stats(const char* name, struct rtnl_link_stats64
 #define CAN_MSG_FLAG_RTR 0x08 /* Remote transmission request */
 #define CAN_MSG_FLAG_EXT 0x10 /* Extended frame format (29-bit ID) */
 
-struct can_message
+struct can_frame
 {
-    u32 id;        /* 11 or 29 bit identifier */
-    u8 flags;      /* CAN frame flags (FD, BRS, ESI, RTR, etc.) */
-    u8 dlc;        /* Data length code: number of bytes of data (0..8 for CAN, 0..64 for CAN FD) */
-    u8 data[64];   /* CAN frame payload (0..8 bytes for CAN, 0..64 bytes for CAN FD) */
-    u64 timestamp; /* Timestamp in microseconds */
+    u64 timestamp;  /* Timestamp in microseconds */
+    u32 id;         /* 11 or 29 bit identifier */
+    u8 flags;       /* CAN frame flags (FD, BRS, ESI, RTR, etc.) */
+    u8 dlc;         /* Data length code: number of bytes of data (0..8 for CAN, 0..64 for CAN FD) */
+    u8 data[64];    /* CAN frame payload (0..8 bytes for CAN, 0..64 bytes for CAN FD) */
+    u8 reserved[2]; /* Padding for alignment */
 };
 
-CANVENIENT_API int can_do_init(int index);
-CANVENIENT_API int can_do_cleanup(int index);
-CANVENIENT_API int can_do_write(int index, struct can_message* msg);
-CANVENIENT_API int can_do_read(int index, struct can_message* msg);
+CANVENIENT_API int can_find_id(int* id, const char* name);
+CANVENIENT_API int can_find_name(char* name, const id);
 
-CANVENIENT_API int can_get_interface_name(int index, char* name);
+CANVENIENT_API int can_open(const char* name);
+CANVENIENT_API int can_open_fd(const char* name);
+CANVENIENT_API int can_close(const char* name);
+
+CANVENIENT_API int can_send(const char* name, struct can_frame* frame);
+CANVENIENT_API int can_recv(const char* name, struct can_frame* frame);
 
 #endif /* CANVENIENT_H */
