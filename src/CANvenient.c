@@ -64,8 +64,11 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
 
     for (u32 i = 0; i < ch_count; i++)
     {
+        size_t name_len;
         (*iface)[i].id = pcan_ch_info[i].channel_handle;
-        (*iface)[i].name = (char*)malloc(strlen(pcan_ch_info[i].device_name) + 1);
+
+        name_len = strnlen(pcan_ch_info[i].device_name, sizeof(pcan_ch_info[i].device_name));
+        (*iface)[i].name = (char*)malloc(name_len + 1);
         if (NULL == (*iface)[i].name)
         {
             for (u32 j = 0; j < i; j++)
@@ -77,9 +80,9 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
             return -1;
         }
 
-        snprintf((*iface)[i].name, strlen(pcan_ch_info[i].device_name) + 1, "%s", pcan_ch_info[i].device_name);
-
         /* Set interface properties */
+        snprintf((*iface)[i].name, name_len + 1, "%s", pcan_ch_info[i].device_name);
+
         (*iface)[i].id = pcan_ch_info[i].device_id;
         (*iface)[i].vendor = CAN_VENDOR_PEAK;
         (*iface)[i].opened = 0;
@@ -122,6 +125,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         char path[512];
         FILE* type_file;
         int if_type;
+        size_t name_len;
 
         /* Skip . and .. */
         if (entry->d_name[0] == '.')
@@ -169,7 +173,8 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         }
 
         /* Allocate and copy interface name */
-        (*iface)[iface_count].name = (char*)malloc(strlen(entry->d_name) + 1);
+        name_len = strnlen(entry->d_name, 256);
+        (*iface)[iface_count].name = (char*)malloc(name_len + 1);
         if (NULL == (*iface)[iface_count].name)
         {
             for (int i = 0; i < iface_count; i++)
@@ -180,9 +185,11 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
             closedir(dir);
             return -1;
         }
-        strcpy((*iface)[iface_count].name, entry->d_name);
 
         /* Set interface properties */
+        strncpy((*iface)[iface_count].name, entry->d_name, name_len);
+
+        (*iface)[iface_count].name[name_len] = '\0';
         (*iface)[iface_count].id = if_nametoindex(entry->d_name);
         (*iface)[iface_count].vendor = CAN_VENDOR_SOCKETCAN; /* Generic SocketCAN */
         (*iface)[iface_count].opened = 0;
@@ -213,6 +220,11 @@ CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count)
 
 CANVENIENT_API int can_open(struct can_iface* iface)
 {
+    if (NULL == iface)
+    {
+        return -1;
+    }
+
     if (NULL == iface->name)
     {
         return -1;
