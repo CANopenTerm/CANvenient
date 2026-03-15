@@ -8,8 +8,9 @@
  *
  **/
 
-#ifdef _WIN32
 #include <CANvenient.h>
+
+#ifdef _WIN32
 #elif __linux__
 #include <socketecan.h>
 #endif

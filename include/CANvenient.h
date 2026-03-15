@@ -17,6 +17,8 @@
 #define CANVENIENT_API __attribute__((visibility("default")))
 #endif
 
+#ifdef _WIN32
+
 #include <limits.h>
 
 #if UCHAR_MAX == 0xffU
@@ -50,6 +52,23 @@ typedef unsigned __int64 u64;
 #else
 typedef unsigned long long u64;
 #endif
+
+/* CAN message flags */
+#define CAN_MSG_FLAG_FD 0x01  /* CAN FD frame */
+#define CAN_MSG_FLAG_BRS 0x02 /* Bit rate switch (CAN FD) */
+#define CAN_MSG_FLAG_ESI 0x04 /* Error state indicator (CAN FD) */
+#define CAN_MSG_FLAG_RTR 0x08 /* Remote transmission request */
+#define CAN_MSG_FLAG_EXT 0x10 /* Extended frame format (29-bit ID) */
+
+struct can_frame
+{
+    u64 timestamp;  /* Timestamp in microseconds */
+    u32 id;         /* 11 or 29 bit identifier */
+    u8 flags;       /* CAN frame flags (FD, BRS, ESI, RTR, etc.) */
+    u8 dlc;         /* Data length code: number of bytes of data (0..8 for CAN, 0..64 for CAN FD) */
+    u8 data[64];    /* CAN frame payload (0..8 bytes for CAN, 0..64 bytes for CAN FD) */
+    u8 reserved[2]; /* Padding for alignment */
+};
 
 /*
  * CAN bit-timing parameters
@@ -154,6 +173,8 @@ struct can_device_stats
  */
 struct rtnl_link_stats64;
 
+#endif /* _WIN32 */
+
 #ifdef _WIN32
 /*
  * Network interface statistics (Windows-compatible definition).
@@ -185,7 +206,11 @@ struct rtnl_link_stats64
     u32 rx_compressed;
     u32 tx_compressed;
 };
-#endif /* _WIN32 */
+#elif __linux__
+#include <linux/if_link.h>
+#endif
+
+#ifdef _WIN32
 
 /*
  * CAN netlink interface.
@@ -233,27 +258,11 @@ CANVENIENT_API int can_get_berr_counter(const char* name, struct can_berr_counte
 CANVENIENT_API int can_get_device_stats(const char* name, struct can_device_stats* cds);
 CANVENIENT_API int can_get_link_stats(const char* name, struct rtnl_link_stats64* rls);
 
+#endif /* _WIN32 */
+
 /* CANvenient-specific API. */
-
-/* CAN message flags */
-#define CAN_MSG_FLAG_FD 0x01  /* CAN FD frame */
-#define CAN_MSG_FLAG_BRS 0x02 /* Bit rate switch (CAN FD) */
-#define CAN_MSG_FLAG_ESI 0x04 /* Error state indicator (CAN FD) */
-#define CAN_MSG_FLAG_RTR 0x08 /* Remote transmission request */
-#define CAN_MSG_FLAG_EXT 0x10 /* Extended frame format (29-bit ID) */
-
-struct can_frame
-{
-    u64 timestamp;  /* Timestamp in microseconds */
-    u32 id;         /* 11 or 29 bit identifier */
-    u8 flags;       /* CAN frame flags (FD, BRS, ESI, RTR, etc.) */
-    u8 dlc;         /* Data length code: number of bytes of data (0..8 for CAN, 0..64 for CAN FD) */
-    u8 data[64];    /* CAN frame payload (0..8 bytes for CAN, 0..64 bytes for CAN FD) */
-    u8 reserved[2]; /* Padding for alignment */
-};
-
 CANVENIENT_API int can_find_id(int* id, const char* name);
-CANVENIENT_API int can_find_name(char* name, const id);
+CANVENIENT_API int can_find_name(char* name, const int id);
 
 CANVENIENT_API int can_open(const char* name);
 CANVENIENT_API int can_open_fd(const char* name);
