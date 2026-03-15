@@ -81,7 +81,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         }
 
         /* Set interface properties */
-        snprintf((*iface)[i].name, name_len + 1, "%s", pcan_ch_info[i].device_name);
+        snprintf((*iface)[i].name, name_len + 1, "%.*s", (int)name_len, pcan_ch_info[i].device_name);
 
         (*iface)[i].id = pcan_ch_info[i].device_id;
         (*iface)[i].vendor = CAN_VENDOR_PEAK;
@@ -187,7 +187,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         }
 
         /* Set interface properties */
-        strncpy((*iface)[iface_count].name, entry->d_name, name_len);
+        snprintf((*iface)[iface_count].name, name_len + 1, "%.*s", (int)name_len, entry->d_name);
 
         (*iface)[iface_count].name[name_len] = '\0';
         (*iface)[iface_count].id = if_nametoindex(entry->d_name);
