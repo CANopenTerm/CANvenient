@@ -1,7 +1,6 @@
 /** @file example.c
  *
- *  CANvenient is an abstraction layer for multiple CAN APIs on Windows,
- *  similar to libsocketcan on Linux.
+ *  CANvenient is an abstraction layer for multiple CAN APIs on Windows.
  *
  *  Copyright (c) 2026, Michael Fitzmayer. All rights reserved.
  *  SPDX-License-Identifier: MIT
