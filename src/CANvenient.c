@@ -18,7 +18,12 @@
 #include <windows.h>
 #include <PCANBasic.h>
 
-#elif __linux__
+#elif defined __linux__
+#include <dirent.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <linux/can.h>
+#include <linux/can/raw.h>
 #endif
 
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
@@ -72,18 +77,119 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
 
         snprintf((*iface)[i].name, strlen(pcan_ch_info[i].device_name) + 1, "%s", pcan_ch_info[i].device_name);
 
-        (*iface)[i].vendor = CAN_VENDOR_PEAK;
+        /* Set interface properties */
         (*iface)[i].id = pcan_ch_info[i].device_id;
+        (*iface)[i].vendor = CAN_VENDOR_PEAK;
+        (*iface)[iface_count].opened = 0;
+        (*iface)[iface_count].baudrate = CAN_BAUD_1M;
     }
 
     *count = (int)pcan_ch_count;
     free(pcan_ch_info);
     return 0;
 
-#else
-    (void)iface;
-    (void)count;
-    return -1;
+#elif defined __linux__
+
+    DIR* dir;
+    struct dirent* entry;
+    int iface_count = 0;
+    int capacity = 16;
+    struct can_iface* temp_iface;
+
+    /* Open /sys/class/net to enumerate network interfaces */
+    dir = opendir("/sys/class/net");
+    if (NULL == dir)
+    {
+        return -1;
+    }
+
+    /* Allocate initial array */
+    *iface = (struct can_iface*)malloc(sizeof(struct can_iface) * capacity);
+    if (NULL == *iface)
+    {
+        closedir(dir);
+        return -1;
+    }
+
+    /* Scan through network interfaces */
+    while ((entry = readdir(dir)) != NULL)
+    {
+        char path[512];
+        FILE* type_file;
+        int if_type;
+
+        /* Skip . and .. */
+        if (entry->d_name[0] == '.')
+        {
+            continue;
+        }
+
+        /* Check if this is a CAN interface by reading the type */
+        snprintf(path, sizeof(path), "/sys/class/net/%s/type", entry->d_name);
+        type_file = fopen(path, "r");
+        if (NULL == type_file)
+        {
+            continue;
+        }
+
+        if (fscanf(type_file, "%d", &if_type) != 1)
+        {
+            fclose(type_file);
+            continue;
+        }
+        fclose(type_file);
+
+        /* ARPHRD_CAN = 280 (CAN interface) */
+        if (if_type != 280)
+        {
+            continue;
+        }
+
+        /* Expand array if needed */
+        if (iface_count >= capacity)
+        {
+            capacity *= 2;
+            temp_iface = (struct can_iface*)realloc(*iface, sizeof(struct can_iface) * capacity);
+            if (NULL == temp_iface)
+            {
+                for (int i = 0; i < iface_count; i++)
+                {
+                    free((*iface)[i].name);
+                }
+                free(*iface);
+                closedir(dir);
+                return -1;
+            }
+            *iface = temp_iface;
+        }
+
+        /* Allocate and copy interface name */
+        (*iface)[iface_count].name = (char*)malloc(strlen(entry->d_name) + 1);
+        if (NULL == (*iface)[iface_count].name)
+        {
+            for (int i = 0; i < iface_count; i++)
+            {
+                free((*iface)[i].name);
+            }
+            free(*iface);
+            closedir(dir);
+            return -1;
+        }
+        strcpy((*iface)[iface_count].name, entry->d_name);
+
+        /* Set interface properties */
+        (*iface)[iface_count].id = if_nametoindex(entry->d_name);
+        (*iface)[iface_count].vendor = CAN_VENDOR_SOCKETCAN; /* Generic SocketCAN */
+        (*iface)[iface_count].opened = 0;
+        (*iface)[iface_count].baudrate = CAN_BAUD_1M;
+
+        iface_count++;
+    }
+
+    closedir(dir);
+
+    *count = iface_count;
+    return (iface_count > 0) ? 0 : -1;
 #endif
 }
 

@@ -52,6 +52,7 @@ typedef unsigned long long u64;
 #define CANVENIENT_API __attribute__((visibility("default")))
 
 #include <linux/types.h>
+#include <linux/can.h>
 
 typedef __u8 u8;
 typedef __u16 u16;
@@ -65,9 +66,10 @@ typedef __u64 u64;
  */
 enum can_vendor
 {
-    CAN_VENDOR_PEAK = 0,
-    CAN_VENDOR_IXXAT = 1,
-    CAN_VENDOR_KVASER = 2
+    CAN_VENDOR_SOCKETCAN = 0,
+    CAN_VENDOR_PEAK = 1,
+    CAN_VENDOR_IXXAT = 2,
+    CAN_VENDOR_KVASER = 3
 };
 
 /*
@@ -103,18 +105,25 @@ struct can_iface
     enum can_vendor vendor;
 };
 
+#ifndef _CAN_H
+#define _CAN_H
+
+#define CAN_MAX_DLEN 8
+
 /*
  * CAN message frame.
  */
 struct can_frame
 {
-    u64 timestamp;  /* Timestamp in microseconds */
-    u32 id;         /* 11 or 29 bit identifier */
-    u8 flags;       /* CAN frame flags (FD, BRS, ESI, RTR, etc.) */
-    u8 dlc;         /* Data length code: number of bytes of data (0..8 for CAN, 0..64 for CAN FD) */
-    u8 data[64];    /* CAN frame payload (0..8 bytes for CAN, 0..64 bytes for CAN FD) */
-    u8 reserved[2]; /* Padding for alignment */
+    u64 timestamp; /* Timestamp in microseconds */
+    u32 can_id;    /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+    u8 pad;        /* padding */
+    u8 res0;       /* reserved / padding */
+    u8 len8_dlc;   /* optional DLC for 8 byte payload length (9 .. 15) */
+    u8 data[CAN_MAX_DLEN];
 };
+
+#endif /* _UAPI_CAN_H */
 
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count);
 CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count);
