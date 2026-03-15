@@ -261,6 +261,11 @@ CANVENIENT_API int can_open_fd(struct can_iface* iface)
 
 CANVENIENT_API void can_close(struct can_iface* iface)
 {
+    if (NULL == iface)
+    {
+        return -1;
+    }
+
 #ifdef _WIN32
     switch (iface->vendor)
     {
