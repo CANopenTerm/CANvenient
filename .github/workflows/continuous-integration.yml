@@ -1,0 +1,42 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  Linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -y -qq
+        sudo apt-get install ninja-build libsocketcan-dev libreadline-dev
+
+    - name: Build CANvenient
+      run: |
+        cmake -B ${{github.workspace}}/build -G Ninja -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} ${{github.workspace}}
+        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+  Windows:
+    needs:   Linux
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: TheMrMilchmann/setup-msvc-dev@v3
+        with:
+          arch: x64
+
+      - name: Build
+        run: |
+          cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
