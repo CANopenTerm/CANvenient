@@ -122,7 +122,7 @@ struct can_frame
     u8 data[CAN_MAX_DLEN];
 };
 
-#endif /* _UAPI_CAN_H */
+#endif /* _CAN_H */
 
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count);
 CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count);
