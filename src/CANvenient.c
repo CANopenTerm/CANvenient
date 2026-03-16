@@ -26,6 +26,7 @@ typedef struct ixxat_ctx
     ICanChannel* pChannel;
     IFifoReader* pReader;
     IFifoWriter* pWriter;
+
 } ixxat_ctx_t;
 
 static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
@@ -36,6 +37,8 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
+
+static int* can_socket;
 #endif
 
 CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
@@ -216,6 +219,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         closedir(dir);
         return -1;
     }
+    can_socket = (int*)malloc(sizeof(int) * capacity);
 
     /* Scan through network interfaces */
     while ((entry = readdir(dir)) != NULL)
@@ -267,6 +271,18 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                 closedir(dir);
                 return -1;
             }
+            can_socket = (int*)realloc(can_socket, sizeof(int) * capacity);
+            if (NULL == can_socket)
+            {
+                for (int i = 0; i < iface_count; i++)
+                {
+                    free((*iface)[i].name);
+                }
+                free(*iface);
+                closedir(dir);
+                return -1;
+            }
+
             *iface = temp_iface;
         }
 
@@ -320,6 +336,9 @@ CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count)
         }
     }
     free(*iface);
+#if defined __linux__
+    free(can_socket);
+#endif
 }
 
 CANVENIENT_API int can_open(struct can_iface* iface)
