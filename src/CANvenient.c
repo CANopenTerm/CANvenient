@@ -247,6 +247,9 @@ CANVENIENT_API int can_open(struct can_iface* iface)
 
 #elif defined __linux__
 
+    iface->opened = 0;
+    /* Tbd. */
+
 #endif
 
     return 0;
