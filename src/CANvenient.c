@@ -132,10 +132,10 @@ CANVENIENT_API int can_find_interfaces(void)
     HRESULT hr;
 
     hr = VciGetDeviceManager(&pDevMan);
-    if (SUCCEEDED(hr) && (NULL != pDevMan))
+    if (SUCCEEDED(hr) && (pDevMan))
     {
         hr = pDevMan->lpVtbl->EnumDevices(pDevMan, &pEnum);
-        if (SUCCEEDED(hr) && (NULL != pEnum))
+        if (SUCCEEDED(hr) && (pEnum))
         {
             VCIDEVICEINFO devInfo;
             u32 fetched = 0;
@@ -146,10 +146,10 @@ CANVENIENT_API int can_find_interfaces(void)
                 IBalObject* pBal = NULL;
 
                 hr = pDevMan->lpVtbl->OpenDevice(pDevMan, &devInfo.VciObjectId, &pDevice);
-                if (SUCCEEDED(hr) && (NULL != pDevice))
+                if (SUCCEEDED(hr) && (pDevice))
                 {
                     hr = pDevice->lpVtbl->OpenComponent(pDevice, &CLSID_VCIBAL, &IID_IBalObject, (PVOID*)&pBal);
-                    if (SUCCEEDED(hr) && (NULL != pBal))
+                    if (SUCCEEDED(hr) && (pBal))
                     {
                         BALFEATURES features;
 
@@ -229,7 +229,7 @@ CANVENIENT_API int can_find_interfaces(void)
     }
 
     /* Scan through network interfaces */
-    while ((entry = readdir(dir)) != NULL)
+    while (! entry = readdir(dir))
     {
         char path[512];
         FILE* type_file;
@@ -336,8 +336,8 @@ CANVENIENT_API int can_open(int index)
             ICanChannel* pChannel = NULL;
             CANINITLINE initLine;
             HRESULT hr;
-            UINT8 bt0;
-            UINT8 bt1;
+            u8 bt0;
+            u8 bt1;
 
             ctx = (ixxat_ctx_t*)can_interface[index].internal;
             if (NULL == ctx)
@@ -418,7 +418,7 @@ CANVENIENT_API int can_open(int index)
 
 #elif defined __linux__
 
-    if (can_interface[index].name != NULL)
+    if (! can_interface[index].name)
     {
         can_interface[index].opened = 1;
         // (int)can_interface[index].internal = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -461,19 +461,19 @@ CANVENIENT_API void can_close(int index)
         case CAN_VENDOR_IXXAT:
         {
             ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
-            if (NULL != ctx)
+            if (ctx)
             {
-                if (NULL != ctx->pWriter)
+                if (ctx->pWriter)
                 {
                     ctx->pWriter->lpVtbl->Release(ctx->pWriter);
                     ctx->pWriter = NULL;
                 }
-                if (NULL != ctx->pReader)
+                if (ctx->pReader)
                 {
                     ctx->pReader->lpVtbl->Release(ctx->pReader);
                     ctx->pReader = NULL;
                 }
-                if (NULL != ctx->pChannel)
+                if (ctx->pChannel)
                 {
                     ctx->pChannel->lpVtbl->Deactivate(ctx->pChannel);
                     ctx->pChannel->lpVtbl->Release(ctx->pChannel);
@@ -482,17 +482,19 @@ CANVENIENT_API void can_close(int index)
             }
             break;
         }
+        case CAN_VENDOR_NONE:
         default:
             break;
     }
 
+    can_interface[index].vendor = CAN_VENDOR_NONE;
     can_interface[index].opened = 0;
 
-    if (can_interface[index].name != NULL)
+    if (! can_interface[index].name)
     {
         free(can_interface[index].name);
     }
-    if (can_interface[index].internal != NULL)
+    if (! can_interface[index].internal)
     {
         free(can_interface[index].internal);
         can_interface[index].internal = NULL;
