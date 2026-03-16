@@ -220,6 +220,12 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         return -1;
     }
     can_socket = (int*)malloc(sizeof(int) * capacity);
+    if (NULL == can_socket)
+    {
+        free(*iface);
+        closedir(dir);
+        return -1;
+    }
 
     /* Scan through network interfaces */
     while ((entry = readdir(dir)) != NULL)
@@ -267,6 +273,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                 {
                     free((*iface)[i].name);
                 }
+                free(can_socket);
                 free(*iface);
                 closedir(dir);
                 return -1;
@@ -278,6 +285,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                 {
                     free((*iface)[i].name);
                 }
+                free(can_socket);
                 free(*iface);
                 closedir(dir);
                 return -1;
@@ -295,6 +303,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
             {
                 free((*iface)[i].name);
             }
+            free(can_socket);
             free(*iface);
             closedir(dir);
             return -1;
