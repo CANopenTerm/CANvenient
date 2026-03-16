@@ -14,39 +14,12 @@
 #ifdef _WIN32
 #define CANVENIENT_API __declspec(dllexport)
 
-#include <limits.h>
+#include <stdint.h>
 
-#if UCHAR_MAX == 0xffU
-typedef unsigned char u8;
-#else
-#error "No 8-bit unsigned type available"
-#endif
-
-#if USHRT_MAX == 0xffffU
-typedef unsigned short u16;
-#elif UINT_MAX == 0xffffU
-typedef unsigned int u16;
-#else
-#error "No 16-bit unsigned type available"
-#endif
-
-#if UINT_MAX == 0xffffffffU
-typedef unsigned int u32;
-#elif ULONG_MAX == 0xffffffffUL
-typedef unsigned long u32;
-#elif USHRT_MAX == 0xffffffffU
-typedef unsigned short u32;
-#else
-#error "No 32-bit unsigned type available"
-#endif
-
-#if ULONG_MAX == 0xffffffffffffffffUL
-typedef unsigned long u64;
-#elif defined(_WIN32) && defined(_MSC_VER)
-typedef unsigned __int64 u64;
-#else
-typedef unsigned long long u64;
-#endif
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 
 #elif __linux__
 #define CANVENIENT_API __attribute__((visibility("default")))

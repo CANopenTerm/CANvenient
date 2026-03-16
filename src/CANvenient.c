@@ -262,7 +262,7 @@ CANVENIENT_API void can_close(struct can_iface* iface)
 {
     if (NULL == iface)
     {
-        return -1;
+        return;
     }
 
 #ifdef _WIN32
@@ -284,6 +284,8 @@ CANVENIENT_API void can_close(struct can_iface* iface)
     iface->opened = 0;
 
 #elif defined __linux__
+
+    return;
 
 #endif
 }

@@ -11,6 +11,7 @@ add_library(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/CANvenient.c
 )
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/deps.cmake)
 
 target_link_libraries(
