@@ -1,7 +1,7 @@
 /** @file CANvenient.c
  *
- *  CANvenient is an abstraction layer for multiple CAN APIs on Windows,
- *  similar to SocketCAN on Linux.
+ *  CANvenient is an abstraction layer for multiple CAN APIs on
+ *  Windows and Linux.
  *
  *  Copyright (c) 2026, Michael Fitzmayer. All rights reserved.
  *  SPDX-License-Identifier: MIT
@@ -37,17 +37,6 @@ typedef __u32 u32;
 typedef __u64 u64;
 
 #endif
-
-/*
- * CAN interface vendor enumeration.
- */
-enum can_vendor
-{
-    CAN_VENDOR_NONE = 0,
-    CAN_VENDOR_SOCKETCAN = 1,
-    CAN_VENDOR_PEAK = 2,
-    CAN_VENDOR_IXXAT = 3
-};
 
 /*
  * CAN interface baud rate enumeration.
@@ -98,6 +87,8 @@ CANVENIENT_API int can_open_fd(int index);
 CANVENIENT_API void can_close(int index);
 
 CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size);
+
+CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud);
 
 CANVENIENT_API int can_send(int index, struct can_frame* frame);
 CANVENIENT_API int can_recv(int index, struct can_frame* frame);

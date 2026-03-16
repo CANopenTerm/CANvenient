@@ -1,6 +1,7 @@
 /** @file CANvenient.c
  *
- *  CANvenient is an abstraction layer for multiple CAN APIs on Windows.
+ *  CANvenient is an abstraction layer for multiple CAN APIs on
+ *  Windows and Linux.
  *
  *  Copyright (c) 2026, Michael Fitzmayer. All rights reserved.
  *  SPDX-License-Identifier: MIT
@@ -13,6 +14,17 @@
 #include <string.h>
 
 #include "CANvenient.h"
+
+/*
+ * CAN interface vendor enumeration.
+ */
+enum can_vendor
+{
+    CAN_VENDOR_NONE = 0,
+    CAN_VENDOR_SOCKETCAN = 1,
+    CAN_VENDOR_PEAK = 2,
+    CAN_VENDOR_IXXAT = 3
+};
 
 /*
  * CAN interface.
@@ -55,6 +67,7 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
+#include <libsocketcan.h>
 #endif
 
 CANVENIENT_API int can_find_interfaces(void)
@@ -524,6 +537,80 @@ CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size)
         snprintf(name_buf, buf_size, "%s", can_interface[index].name);
         return 0;
     }
+}
+
+CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
+{
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        return -1;
+    }
+    else if (baud < CAN_BAUD_1M || baud > CAN_BAUD_5K)
+    {
+        return -1;
+    }
+    else if (! can_interface[index].name)
+    {
+        return -1;
+    }
+
+#ifdef _WIN32
+
+    /* Tbd. */
+    return -1;
+
+#elif defined __linux__
+
+    u32 bitrate;
+
+    switch (baud)
+    {
+        case CAN_BAUD_1M:
+            bitrate = 1000000;
+            break;
+        case CAN_BAUD_800K:
+            bitrate = 800000;
+            break;
+        case CAN_BAUD_500K:
+            bitrate = 500000;
+            break;
+        case CAN_BAUD_250K:
+            bitrate = 250000;
+            break;
+        case CAN_BAUD_125K:
+            bitrate = 125000;
+            break;
+        case CAN_BAUD_100K:
+            bitrate = 100000;
+            break;
+        case CAN_BAUD_95K:
+            bitrate = 95000;
+            break;
+        case CAN_BAUD_83K:
+            bitrate = 83000;
+            break;
+        case CAN_BAUD_50K:
+            bitrate = 50000;
+            break;
+        case CAN_BAUD_47K:
+            bitrate = 47000;
+            break;
+        case CAN_BAUD_33K:
+            bitrate = 33000;
+            break;
+        case CAN_BAUD_20K:
+            bitrate = 20000;
+            break;
+        case CAN_BAUD_10K:
+            bitrate = 10000;
+            break;
+        case CAN_BAUD_5K:
+            bitrate = 5000;
+            break;
+    }
+
+    return can_set_bitrate(can_interface[index].name, bitrate);
+#endif
 }
 
 CANVENIENT_API int can_send(int index, struct can_frame* frame)

@@ -19,6 +19,13 @@ target_link_libraries(
   ${PLATFORM_LIBS}
 )
 
+if(UNIX)
+  target_link_libraries(
+    ${PROJECT_NAME}
+    socketcan
+  )
+endif()
+
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
   target_compile_options(
     ${PROJECT_NAME}

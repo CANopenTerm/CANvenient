@@ -94,7 +94,4 @@ if(WIN32)
     ${PROJECT_NAME}
     Ixxat_VCI_devel
     PCAN_devel)
-
-elseif(UNIX)
-
 endif()
