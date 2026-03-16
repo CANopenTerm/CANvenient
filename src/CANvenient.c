@@ -287,7 +287,7 @@ CANVENIENT_API int can_find_interfaces(void)
         can_interface[free_index].vendor = CAN_VENDOR_SOCKETCAN;
         can_interface[free_index].opened = 0;
         can_interface[free_index].baudrate = CAN_BAUD_1M;
-        can_interface[free_index].internal = malloc(sizeof(int));
+        can_interface[free_index].internal = malloc(sizeof(int)); /* CAN socket. */
     }
 
     closedir(dir);
@@ -421,6 +421,7 @@ CANVENIENT_API int can_open(int index)
     if (can_interface[index].name != NULL)
     {
         can_interface[index].opened = 1;
+        // (int)can_interface[index].internal = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     }
     else
     {
