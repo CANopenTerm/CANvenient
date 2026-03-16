@@ -75,6 +75,7 @@ struct can_iface
     char* name;
     enum can_baudrate baudrate;
     enum can_vendor vendor;
+    void* internal;
 };
 
 #ifndef _CAN_H
