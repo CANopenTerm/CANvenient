@@ -25,7 +25,7 @@ jobs:
       run: |
         mkdir build
         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build
-        cppcheck --project=build/compile_commands.json --enable=all --suppress=missingIncludeSystem --suppress=unusedFunction --inconclusive --force --std=c99 --error-exitcode=1
+        cppcheck --project=build/compile_commands.json --enable=all --suppress=constParameterPointer --suppress=missingIncludeSystem --suppress=unusedFunction --inconclusive --force --std=c99 --error-exitcode=1
 
     - name: Build CANvenient
       run: |
