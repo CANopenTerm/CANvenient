@@ -11,6 +11,10 @@
 #ifndef CANVENIENT_H
 #define CANVENIENT_H
 
+#include <stddef.h>
+
+#define CAN_MAX_INTERFACES 64
+
 #ifdef _WIN32
 #define CANVENIENT_API __declspec(dllexport)
 
@@ -65,19 +69,6 @@ enum can_baudrate
     CAN_BAUD_5K
 };
 
-/*
- * CAN interface.
- */
-struct can_iface
-{
-    u32 id;
-    u8 opened; /* 0 = closed, 1 = opened */
-    char* name;
-    enum can_baudrate baudrate;
-    enum can_vendor vendor;
-    void* internal;
-};
-
 #ifndef _CAN_H
 #define _CAN_H
 
@@ -98,14 +89,16 @@ struct can_frame
 
 #endif /* _CAN_H */
 
-CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count);
-CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count);
+CANVENIENT_API int can_find_interfaces(void);
+CANVENIENT_API void can_free_interfaces(void);
 
-CANVENIENT_API int can_open(struct can_iface* iface);
-CANVENIENT_API int can_open_fd(struct can_iface* iface);
-CANVENIENT_API void can_close(struct can_iface* iface);
+CANVENIENT_API int can_open(int index);
+CANVENIENT_API int can_open_fd(int index);
+CANVENIENT_API void can_close(int index);
 
-CANVENIENT_API int can_send(struct can_iface* iface, struct can_frame* frame);
-CANVENIENT_API int can_recv(struct can_iface* iface, struct can_frame* frame);
+CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size);
+
+CANVENIENT_API int can_send(int index, struct can_frame* frame);
+CANVENIENT_API int can_recv(int index, struct can_frame* frame);
 
 #endif /* CANVENIENT_H */

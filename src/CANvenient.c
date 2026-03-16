@@ -7,11 +7,29 @@
  *
  **/
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "CANvenient.h"
+
+/*
+ * CAN interface.
+ */
+struct can_iface
+{
+    u32 id;
+    u8 opened; /* 0 = closed, 1 = opened */
+    char* name;
+    enum can_baudrate baudrate;
+    enum can_vendor vendor;
+    void* internal;
+};
+
+static struct can_iface can_interface[CAN_MAX_INTERFACES] = {0};
+
+static int find_free_interface_slot(u32* index);
 
 #ifdef _WIN32
 #include <windows.h>
@@ -37,11 +55,9 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
-
-static int* can_socket;
 #endif
 
-CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
+CANVENIENT_API int can_find_interfaces(void)
 {
 #ifdef _WIN32
     u32 ch_count = 0;
@@ -53,6 +69,11 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
     if (PCAN_ERROR_OK != pcan_status || 0 == ch_count)
     {
         return -1;
+    }
+
+    if (ch_count > CAN_MAX_INTERFACES)
+    {
+        ch_count = CAN_MAX_INTERFACES;
     }
 
     pcan_ch_info = (TPCANChannelInformation*)malloc(sizeof(TPCANChannelInformation) * ch_count);
@@ -69,40 +90,41 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         return -1;
     }
 
-    *iface = (struct can_iface*)malloc(sizeof(struct can_iface) * ch_count);
-    if (NULL == *iface)
-    {
-        free(pcan_ch_info);
-        return -1;
-    }
-
     for (u32 i = 0; i < ch_count; i++)
     {
         size_t name_len;
-        (*iface)[i].id = pcan_ch_info[i].channel_handle;
+
+        if (can_interface[i].name)
+        {
+            /* Slot already occupied: skip. */
+            i++;
+            continue;
+        }
+
+        can_interface[i].id = pcan_ch_info[i].channel_handle;
 
         name_len = strnlen(pcan_ch_info[i].device_name, sizeof(pcan_ch_info[i].device_name));
-        (*iface)[i].name = (char*)malloc(name_len + 1);
-        if (NULL == (*iface)[i].name)
+        can_interface[i].name = (char*)malloc(name_len + 1);
+        if (NULL == can_interface[i].name)
         {
             for (u32 j = 0; j < i; j++)
             {
-                free((*iface)[j].name);
+                free(can_interface[j].name);
             }
-            free(*iface);
             free(pcan_ch_info);
             return -1;
         }
 
         /* Set interface properties */
-        snprintf((*iface)[i].name, name_len + 1, "%.*s", (int)name_len, pcan_ch_info[i].device_name);
+        snprintf(can_interface[i].name, name_len + 1, "%.*s", (int)name_len, pcan_ch_info[i].device_name);
 
-        (*iface)[i].id = pcan_ch_info[i].device_id;
-        (*iface)[i].vendor = CAN_VENDOR_PEAK;
-        (*iface)[i].opened = 0;
-        (*iface)[i].baudrate = CAN_BAUD_1M;
-        (*iface)[i].internal = NULL;
+        can_interface[i].id = pcan_ch_info[i].device_id;
+        can_interface[i].vendor = CAN_VENDOR_PEAK;
+        can_interface[i].opened = 0;
+        can_interface[i].baudrate = CAN_BAUD_1M;
+        can_interface[i].internal = NULL;
     }
+    free(pcan_ch_info);
 
     /* Ixxat. */
     IVciDeviceManager* pDevMan = NULL;
@@ -138,23 +160,22 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                             {
                                 if (features.BusSocketType[bus])
                                 {
-                                    struct can_iface* new_iface;
                                     ixxat_ctx_t* ctx;
                                     char socket_name[256];
                                     size_t name_len;
+                                    u32 free_index;
 
-                                    new_iface = (struct can_iface*)realloc(*iface, sizeof(struct can_iface) * (ch_count + 1));
-                                    if (NULL == new_iface)
+                                    if (0 != find_free_interface_slot(&free_index))
                                     {
-                                        break;
+                                        /* No free slot available: skip. */
+                                        continue;
                                     }
-                                    *iface = new_iface;
 
                                     snprintf(socket_name, sizeof(socket_name), "%s CAN%u", devInfo.Description, bus);
                                     name_len = strnlen(socket_name, sizeof(socket_name));
 
-                                    (*iface)[ch_count].name = (char*)malloc(name_len + 1);
-                                    if (NULL == (*iface)[ch_count].name)
+                                    can_interface[free_index].name = (char*)malloc(name_len + 1);
+                                    if (NULL == can_interface[free_index].name)
                                     {
                                         break;
                                     }
@@ -162,8 +183,8 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                                     ctx = (ixxat_ctx_t*)malloc(sizeof(ixxat_ctx_t));
                                     if (NULL == ctx)
                                     {
-                                        free((*iface)[ch_count].name);
-                                        (*iface)[ch_count].name = NULL;
+                                        free(can_interface[free_index].name);
+                                        can_interface[free_index].name = NULL;
                                         break;
                                     }
                                     ctx->device_id = devInfo.VciObjectId;
@@ -172,12 +193,12 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                                     ctx->pReader = NULL;
                                     ctx->pWriter = NULL;
 
-                                    snprintf((*iface)[ch_count].name, name_len + 1, "%s", socket_name);
-                                    (*iface)[ch_count].id = (u32)bus;
-                                    (*iface)[ch_count].vendor = CAN_VENDOR_IXXAT;
-                                    (*iface)[ch_count].opened = 0;
-                                    (*iface)[ch_count].baudrate = CAN_BAUD_1M;
-                                    (*iface)[ch_count].internal = ctx;
+                                    snprintf(can_interface[ch_count].name, name_len + 1, "%s", socket_name);
+                                    can_interface[ch_count].id = (u32)bus;
+                                    can_interface[ch_count].vendor = CAN_VENDOR_IXXAT;
+                                    can_interface[ch_count].opened = 0;
+                                    can_interface[ch_count].baudrate = CAN_BAUD_1M;
+                                    can_interface[ch_count].internal = ctx;
 
                                     ch_count++;
                                 }
@@ -193,38 +214,17 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         pDevMan->lpVtbl->Release(pDevMan);
     }
 
-    *count = (int)ch_count;
-    free(pcan_ch_info);
     return 0;
 
 #elif defined __linux__
 
     DIR* dir;
     struct dirent* entry;
-    int iface_count = 0;
-    int capacity = 16;
-    struct can_iface* temp_iface;
-    int* temp_socket;
 
     /* Open /sys/class/net to enumerate network interfaces */
     dir = opendir("/sys/class/net");
     if (NULL == dir)
     {
-        return -1;
-    }
-
-    /* Allocate initial array */
-    *iface = (struct can_iface*)malloc(sizeof(struct can_iface) * capacity);
-    if (NULL == *iface)
-    {
-        closedir(dir);
-        return -1;
-    }
-    can_socket = (int*)malloc(sizeof(int) * capacity);
-    if (NULL == can_socket)
-    {
-        free(*iface);
-        closedir(dir);
         return -1;
     }
 
@@ -235,6 +235,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
         FILE* type_file;
         int if_type;
         size_t name_len;
+        u32 free_index;
 
         /* Skip . and .. */
         if (entry->d_name[0] == '.')
@@ -263,115 +264,73 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
             continue;
         }
 
-        /* Expand array if needed */
-        if (iface_count >= capacity)
+        /* Find a free slot in the interface array */
+        if (0 != find_free_interface_slot(&free_index))
         {
-            capacity *= 2;
-            temp_iface = (struct can_iface*)realloc(*iface, sizeof(struct can_iface) * capacity);
-            if (NULL == temp_iface)
-            {
-                for (int i = 0; i < iface_count; i++)
-                {
-                    free((*iface)[i].name);
-                }
-                free(can_socket);
-                free(*iface);
-                closedir(dir);
-                return -1;
-            }
-            *iface = temp_iface;
-
-            temp_socket = (int*)realloc(can_socket, sizeof(int) * capacity);
-            if (NULL == temp_socket)
-            {
-                for (int i = 0; i < iface_count; i++)
-                {
-                    free((*iface)[i].name);
-                }
-                free(can_socket);
-                free(*iface);
-                closedir(dir);
-                return -1;
-            }
-            can_socket = temp_socket;
+            /* No free slot available: skip. */
+            continue;
         }
 
         /* Allocate and copy interface name */
         name_len = strnlen(entry->d_name, 256);
-        (*iface)[iface_count].name = (char*)malloc(name_len + 1);
-        if (NULL == (*iface)[iface_count].name)
+        can_interface[free_index].name = (char*)malloc(name_len + 1);
+        if (NULL == can_interface[free_index].name)
         {
-            for (int i = 0; i < iface_count; i++)
-            {
-                free((*iface)[i].name);
-            }
-            free(can_socket);
-            free(*iface);
             closedir(dir);
             return -1;
         }
 
         /* Set interface properties */
-        snprintf((*iface)[iface_count].name, name_len + 1, "%.*s", (int)name_len, entry->d_name);
+        snprintf(can_interface[free_index].name, name_len + 1, "%.*s", (int)name_len, entry->d_name);
 
-        (*iface)[iface_count].name[name_len] = '\0';
-        (*iface)[iface_count].id = if_nametoindex(entry->d_name);
-        (*iface)[iface_count].vendor = CAN_VENDOR_SOCKETCAN;
-        (*iface)[iface_count].opened = 0;
-        (*iface)[iface_count].baudrate = CAN_BAUD_1M;
-        (*iface)[iface_count].internal = NULL;
-
-        iface_count++;
+        can_interface[free_index].id = if_nametoindex(entry->d_name);
+        can_interface[free_index].vendor = CAN_VENDOR_SOCKETCAN;
+        can_interface[free_index].opened = 0;
+        can_interface[free_index].baudrate = CAN_BAUD_1M;
+        can_interface[free_index].internal = NULL;
     }
 
     closedir(dir);
 
-    *count = iface_count;
-    return (iface_count > 0) ? 0 : -1;
+    return 0;
 #endif
 }
 
-CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count)
+CANVENIENT_API void can_free_interfaces(void)
 {
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < CAN_MAX_INTERFACES; i++)
     {
-        can_close(&(*iface)[i]);
-        if ((*iface)[i].name != NULL)
+        can_close(i);
+        if (can_interface[i].name != NULL)
         {
-            free((*iface)[i].name);
+            free(can_interface[i].name);
         }
-        if ((*iface)[i].internal != NULL)
+        if (can_interface[i].internal != NULL)
         {
-            free((*iface)[i].internal);
-            (*iface)[i].internal = NULL;
+            free(can_interface[i].internal);
+            can_interface[i].internal = NULL;
         }
     }
-    free(*iface);
 #if defined __linux__
-    free(can_socket);
+
 #endif
 }
 
-CANVENIENT_API int can_open(struct can_iface* iface)
+CANVENIENT_API int can_open(int index)
 {
-    if (NULL == iface)
-    {
-        return -1;
-    }
-
-    if (NULL == iface->name)
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
         return -1;
     }
 
 #ifdef _WIN32
-    switch (iface->vendor)
+    switch (can_interface[index].vendor)
     {
         case CAN_VENDOR_PEAK:
         {
-            if (PCAN_ERROR_OK == CAN_Initialize((WORD)iface->id, iface->baudrate, 0, 0, 0))
+            if (PCAN_ERROR_OK == CAN_Initialize((WORD)can_interface[index].id, can_interface[index].baudrate, 0, 0, 0))
             {
-                iface->opened = 1;
+                can_interface[index].opened = 1;
             }
             break;
         }
@@ -389,7 +348,7 @@ CANVENIENT_API int can_open(struct can_iface* iface)
             UINT8 bt0;
             UINT8 bt1;
 
-            ctx = (ixxat_ctx_t*)iface->internal;
+            ctx = (ixxat_ctx_t*)can_interface[index].internal;
             if (NULL == ctx)
             {
                 return -1;
@@ -418,7 +377,7 @@ CANVENIENT_API int can_open(struct can_iface* iface)
             hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanControl, (PVOID*)&pControl);
             if (SUCCEEDED(hr) && NULL != pControl)
             {
-                ixxat_baudrate_to_btr(iface->baudrate, &bt0, &bt1);
+                ixxat_baudrate_to_btr(can_interface[index].baudrate, &bt0, &bt1);
                 initLine.bOpMode = CAN_OPMODE_STANDARD | CAN_OPMODE_EXTENDED | CAN_OPMODE_ERRFRAME;
                 initLine.bReserved = 0;
                 initLine.bBtReg0 = bt0;
@@ -459,7 +418,7 @@ CANVENIENT_API int can_open(struct can_iface* iface)
             pChannel->lpVtbl->GetReader(pChannel, &ctx->pReader);
             pChannel->lpVtbl->GetWriter(pChannel, &ctx->pWriter);
             ctx->pChannel = pChannel;
-            iface->opened = 1;
+            can_interface[index].opened = 1;
             break;
         }
         default:
@@ -468,38 +427,48 @@ CANVENIENT_API int can_open(struct can_iface* iface)
 
 #elif defined __linux__
 
-    iface->opened = 1;
-    /* Tbd. */
+    if (can_interface[index].name != NULL)
+    {
+        can_interface[index].opened = 1;
+    }
+    else
+    {
+        return -1;
+    }
 
 #endif
 
     return 0;
 }
 
-CANVENIENT_API int can_open_fd(struct can_iface* iface)
+CANVENIENT_API int can_open_fd(int index)
 {
-    (void)iface;
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        return -1;
+    }
+
     return 0;
 }
 
-CANVENIENT_API void can_close(struct can_iface* iface)
+CANVENIENT_API void can_close(int index)
 {
-    if (NULL == iface)
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
         return;
     }
 
 #ifdef _WIN32
-    switch (iface->vendor)
+    switch (can_interface[index].vendor)
     {
         case CAN_VENDOR_PEAK:
         {
-            CAN_Uninitialize((WORD)iface->id);
+            CAN_Uninitialize((WORD)can_interface[index].id);
             break;
         }
         case CAN_VENDOR_IXXAT:
         {
-            ixxat_ctx_t* ctx = (ixxat_ctx_t*)iface->internal;
+            ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
             if (NULL != ctx)
             {
                 if (NULL != ctx->pWriter)
@@ -525,7 +494,7 @@ CANVENIENT_API void can_close(struct can_iface* iface)
             break;
     }
 
-    iface->opened = 0;
+    can_interface[index].opened = 0;
 
 #elif defined __linux__
 
@@ -534,18 +503,61 @@ CANVENIENT_API void can_close(struct can_iface* iface)
 #endif
 }
 
-CANVENIENT_API int can_send(struct can_iface* iface, struct can_frame* frame)
+CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size)
 {
-    (void)iface;
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        return -1;
+    }
+    else if (NULL == can_interface[index].name)
+    {
+        return -1;
+    }
+    else if (NULL == name_buf)
+    {
+        return -1;
+    }
+    else
+    {
+        snprintf(name_buf, buf_size, "%s", can_interface[index].name);
+        return 0;
+    }
+}
+
+CANVENIENT_API int can_send(int index, struct can_frame* frame)
+{
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        return -1;
+    }
+
     (void)frame;
     return 0;
 }
 
-CANVENIENT_API int can_recv(struct can_iface* iface, struct can_frame* frame)
+CANVENIENT_API int can_recv(int index, struct can_frame* frame)
 {
-    (void)iface;
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        return -1;
+    }
+
     (void)frame;
     return 0;
+}
+
+static int find_free_interface_slot(u32* index)
+{
+    for (u32 i = 0; i < CAN_MAX_INTERFACES; i++)
+    {
+        if (NULL == can_interface[i].name)
+        {
+            *index = i;
+            return 0;
+        }
+    }
+    *index = CAN_MAX_INTERFACES; /* No free slot found */
+    return -1;
 }
 
 #ifdef _WIN32

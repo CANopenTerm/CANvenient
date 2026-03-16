@@ -13,28 +13,20 @@
 
 int main()
 {
-    struct can_iface* iface[] = {0};
-    int count = 0;
-
-    if (0 == can_find_interfaces(iface, &count))
+    if (0 == can_find_interfaces())
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < CAN_MAX_INTERFACES; i++)
         {
-            struct can_iface* cur = &(*iface)[i];
-            printf("[%d] %s ->", i, cur->name);
-            cur->baudrate = CAN_BAUD_250K;
+            char name[256] = {0};
+            can_get_name(i, name, sizeof(name));
 
-            if (0 == can_open(cur))
+            if (0 == can_open(i))
             {
-                printf(" opened\n");
-            }
-            else
-            {
-                printf(" failed to open\n");
+                printf("[%d] %s -> opened\n", i, name);
             }
         }
     }
 
-    can_free_interfaces(iface, count);
+    can_free_interfaces();
     return EXIT_SUCCESS;
 }
