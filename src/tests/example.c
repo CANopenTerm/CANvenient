@@ -20,19 +20,17 @@ int main()
     {
         for (int i = 0; i < count; i++)
         {
-            if (iface[i] != NULL)
-            {
-                printf("[%d] %s ->", i, iface[i]->name);
-                iface[i]->baudrate = CAN_BAUD_250K;
+            struct can_iface* cur = &(*iface)[i];
+            printf("[%d] %s ->", i, cur->name);
+            cur->baudrate = CAN_BAUD_250K;
 
-                if (0 == can_open(iface[i]))
-                {
-                    printf(" opened\n");
-                }
-                else
-                {
-                    printf(" failed to open\n");
-                }
+            if (0 == can_open(cur))
+            {
+                printf(" opened\n");
+            }
+            else
+            {
+                printf(" failed to open\n");
             }
         }
     }

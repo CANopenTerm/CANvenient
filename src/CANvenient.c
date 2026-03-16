@@ -208,10 +208,10 @@ CANVENIENT_API void can_free_interfaces(struct can_iface* iface[], int count)
 {
     for (int i = 0; i < count; i++)
     {
-        can_close(iface[i]);
-        if (iface[i] != NULL)
+        can_close(&(*iface)[i]);
+        if ((*iface)[i].name != NULL)
         {
-            free(iface[i]->name);
+            free((*iface)[i].name);
         }
     }
     free(*iface);
