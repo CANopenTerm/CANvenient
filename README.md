@@ -5,3 +5,6 @@
 
 CANvenient is an abstraction layer for multiple CAN APIs on Windows.
 It is currently under development and not yet released.
+
+It is not yet fully functional and may contain bugs and the API is
+not yet stable and may change without deprecation.
