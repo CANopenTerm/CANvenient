@@ -26,7 +26,7 @@
 #include <linux/can/raw.h>
 #endif
 
-CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
+CANVENIENT_API int can_find_interfaces(const struct can_iface* iface[], const int* count)
 {
 #ifdef _WIN32
     u32 ch_count = 0;
@@ -258,7 +258,7 @@ CANVENIENT_API int can_open_fd(struct can_iface* iface)
     return 0;
 }
 
-CANVENIENT_API void can_close(struct can_iface* iface)
+CANVENIENT_API void can_close(const struct can_iface* iface)
 {
     if (NULL == iface)
     {
