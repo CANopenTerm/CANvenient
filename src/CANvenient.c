@@ -499,23 +499,21 @@ CANVENIENT_API void can_close(int index)
         default:
             break;
     }
+#endif
 
     can_interface[index].vendor = CAN_VENDOR_NONE;
     can_interface[index].opened = 0;
 
-    if (! can_interface[index].name)
+    if (can_interface[index].name)
     {
         free(can_interface[index].name);
+        can_interface[index].name = NULL;
     }
-    if (! can_interface[index].internal)
+    if (can_interface[index].internal)
     {
         free(can_interface[index].internal);
         can_interface[index].internal = NULL;
     }
-
-    return;
-
-#endif
 }
 
 CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size)
