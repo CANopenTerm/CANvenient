@@ -204,6 +204,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
     int iface_count = 0;
     int capacity = 16;
     struct can_iface* temp_iface;
+    int* temp_socket;
 
     /* Open /sys/class/net to enumerate network interfaces */
     dir = opendir("/sys/class/net");
@@ -278,8 +279,10 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                 closedir(dir);
                 return -1;
             }
-            can_socket = (int*)realloc(can_socket, sizeof(int) * capacity);
-            if (NULL == can_socket)
+            *iface = temp_iface;
+
+            temp_socket = (int*)realloc(can_socket, sizeof(int) * capacity);
+            if (NULL == temp_socket)
             {
                 for (int i = 0; i < iface_count; i++)
                 {
@@ -290,8 +293,7 @@ CANVENIENT_API int can_find_interfaces(struct can_iface* iface[], int* count)
                 closedir(dir);
                 return -1;
             }
-
-            *iface = temp_iface;
+            can_socket = temp_socket;
         }
 
         /* Allocate and copy interface name */
