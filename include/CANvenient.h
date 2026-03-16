@@ -43,9 +43,10 @@ typedef __u64 u64;
  */
 enum can_vendor
 {
-    CAN_VENDOR_SOCKETCAN = 0,
-    CAN_VENDOR_PEAK = 1,
-    CAN_VENDOR_IXXAT = 2
+    CAN_VENDOR_NONE = 0,
+    CAN_VENDOR_SOCKETCAN = 1,
+    CAN_VENDOR_PEAK = 2,
+    CAN_VENDOR_IXXAT = 3
 };
 
 /*

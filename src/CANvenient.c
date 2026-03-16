@@ -287,7 +287,7 @@ CANVENIENT_API int can_find_interfaces(void)
         can_interface[free_index].vendor = CAN_VENDOR_SOCKETCAN;
         can_interface[free_index].opened = 0;
         can_interface[free_index].baudrate = CAN_BAUD_1M;
-        can_interface[free_index].internal = NULL;
+        can_interface[free_index].internal = malloc(sizeof(int));
     }
 
     closedir(dir);
@@ -301,15 +301,6 @@ CANVENIENT_API void can_free_interfaces(void)
     for (int i = 0; i < CAN_MAX_INTERFACES; i++)
     {
         can_close(i);
-        if (can_interface[i].name != NULL)
-        {
-            free(can_interface[i].name);
-        }
-        if (can_interface[i].internal != NULL)
-        {
-            free(can_interface[i].internal);
-            can_interface[i].internal = NULL;
-        }
     }
 #if defined __linux__
 
@@ -496,7 +487,15 @@ CANVENIENT_API void can_close(int index)
 
     can_interface[index].opened = 0;
 
-#elif defined __linux__
+    if (can_interface[index].name != NULL)
+    {
+        free(can_interface[index].name);
+    }
+    if (can_interface[index].internal != NULL)
+    {
+        free(can_interface[index].internal);
+        can_interface[index].internal = NULL;
+    }
 
     return;
 
