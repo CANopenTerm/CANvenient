@@ -229,7 +229,7 @@ CANVENIENT_API int can_find_interfaces(void)
     }
 
     /* Scan through network interfaces */
-    while (! entry = readdir(dir))
+    while ((entry = readdir(dir)))
     {
         char path[512];
         FILE* type_file;
@@ -418,7 +418,7 @@ CANVENIENT_API int can_open(int index)
 
 #elif defined __linux__
 
-    if (! can_interface[index].name)
+    if (can_interface[index].name)
     {
         can_interface[index].opened = 1;
         // (int)can_interface[index].internal = socket(PF_CAN, SOCK_RAW, CAN_RAW);
