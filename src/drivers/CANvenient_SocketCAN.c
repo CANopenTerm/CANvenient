@@ -283,7 +283,7 @@ int socketcan_recv(int index, struct can_frame* frame, u64* timestamp)
     struct iovec iov;
     char ctrlmsg[CMSG_SPACE(sizeof(struct timeval))];
     struct cmsghdr* cmsg;
-    struct timeval* tv;
+    const struct timeval* tv;
     int nbytes;
 
     if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)

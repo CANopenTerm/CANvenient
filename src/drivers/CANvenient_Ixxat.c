@@ -38,7 +38,6 @@ int ixxat_find_interfaces(void)
 {
 #ifdef _WIN32
 
-    u32 ch_count = 0;
     IVciDeviceManager* pDevMan = NULL;
     IVciEnumDevice* pEnum = NULL;
     HRESULT hr;
