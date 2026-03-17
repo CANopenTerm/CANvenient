@@ -744,7 +744,7 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
     return 0;
 }
 
-CANVENIENT_API int can_recv(int index, struct can_frame* frame)
+CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
@@ -770,8 +770,8 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame)
 
             frame->can_id = pcan_frame.ID;
             frame->can_dlc = pcan_frame.LEN;
-            frame->timestamp =
-                pcan_timestamp.micros + (1000ULL * pcan_timestamp.millis) + (0x100000000ULL * 1000ULL * pcan_timestamp.millis_overflow);
+
+            *timestamp = pcan_timestamp.micros + (1000ULL * pcan_timestamp.millis) + (0x100000000ULL * 1000ULL * pcan_timestamp.millis_overflow);
 
             for (int i = 0; i < 8; i += 1)
             {
@@ -795,7 +795,7 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame)
     struct iovec iov;
     char ctrlmsg[CMSG_SPACE(sizeof(struct timeval))];
     struct cmsghdr* cmsg;
-    /* struct timeval* tv; */
+    struct timeval* tv;
     int nbytes;
 
     if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)
@@ -824,10 +824,8 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame)
     {
         if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMP)
         {
-            /* Not sure where to store it yet. */
-
-            /* tv = (struct timeval*)CMSG_DATA(cmsg); */
-            /* frame->timestamp = tv->tv_sec * 1000000ULL + tv->tv_usec; */
+            tv = (struct timeval*)CMSG_DATA(cmsg);
+            *timestamp = tv->tv_sec * 1000000ULL + tv->tv_usec;
             break;
         }
     }

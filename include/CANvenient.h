@@ -71,8 +71,7 @@ enum can_baudrate
  */
 struct can_frame
 {
-    u64 timestamp; /* Timestamp in microseconds */
-    u32 can_id;    /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+    u32 can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
     union
     {
         u8 len;
@@ -101,6 +100,6 @@ CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size);
 CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud);
 
 CANVENIENT_API int can_send(int index, struct can_frame* frame);
-CANVENIENT_API int can_recv(int index, struct can_frame* frame);
+CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp);
 
 #endif /* CANVENIENT_H */
