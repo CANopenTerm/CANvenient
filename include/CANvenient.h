@@ -64,6 +64,8 @@ enum can_baudrate
 
 #define CAN_MAX_DLEN 8
 
+#ifdef _WIN32
+
 /*
  * CAN message frame.
  */
@@ -71,11 +73,19 @@ struct can_frame
 {
     u64 timestamp; /* Timestamp in microseconds */
     u32 can_id;    /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    u8 pad;        /* padding */
-    u8 res0;       /* reserved / padding */
-    u8 len8_dlc;   /* optional DLC for 8 byte payload length (9 .. 15) */
+    union
+    {
+        u8 len;
+        u8 can_dlc; /* frame payload length in byte (0 .. CAN_MAX_DLEN) */
+    };
+
+    u8 pad;      /* padding */
+    u8 res0;     /* reserved / padding */
+    u8 len8_dlc; /* optional DLC for 8 byte payload length (9 .. 15) */
     u8 data[CAN_MAX_DLEN];
 };
+
+#endif
 
 #endif /* _CAN_H */
 

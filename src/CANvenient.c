@@ -31,7 +31,6 @@ enum can_vendor
  */
 struct can_iface
 {
-    u32 id;
     u8 opened; /* 0 = closed, 1 = opened */
     char* name;
     enum can_baudrate baudrate;
@@ -68,6 +67,7 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <libsocketcan.h>
+#include <unistd.h>
 #endif
 
 CANVENIENT_API int can_find_interfaces(void)
@@ -114,7 +114,12 @@ CANVENIENT_API int can_find_interfaces(void)
             continue;
         }
 
-        can_interface[i].id = pcan_ch_info[i].channel_handle;
+        can_interface[i].internal = malloc(sizeof(TPCANChannelInformation));
+        if (! can_interface[i].internal)
+        {
+            free(pcan_ch_info);
+            return -1;
+        }
 
         name_len = strnlen(pcan_ch_info[i].device_name, sizeof(pcan_ch_info[i].device_name));
         can_interface[i].name = (char*)malloc(name_len + 1);
@@ -130,12 +135,11 @@ CANVENIENT_API int can_find_interfaces(void)
 
         /* Set interface properties */
         snprintf(can_interface[i].name, name_len + 1, "%.*s", (int)name_len, pcan_ch_info[i].device_name);
+        memcpy(can_interface[i].internal, &pcan_ch_info[i], sizeof(TPCANChannelInformation));
 
-        can_interface[i].id = pcan_ch_info[i].device_id;
         can_interface[i].vendor = CAN_VENDOR_PEAK;
         can_interface[i].opened = 0;
         can_interface[i].baudrate = CAN_BAUD_1M;
-        can_interface[i].internal = NULL;
     }
     free(pcan_ch_info);
 
@@ -207,7 +211,6 @@ CANVENIENT_API int can_find_interfaces(void)
                                     ctx->pWriter = NULL;
 
                                     snprintf(can_interface[ch_count].name, name_len + 1, "%s", socket_name);
-                                    can_interface[ch_count].id = (u32)bus;
                                     can_interface[ch_count].vendor = CAN_VENDOR_IXXAT;
                                     can_interface[ch_count].opened = 0;
                                     can_interface[ch_count].baudrate = CAN_BAUD_1M;
@@ -296,7 +299,6 @@ CANVENIENT_API int can_find_interfaces(void)
         /* Set interface properties */
         snprintf(can_interface[free_index].name, name_len + 1, "%.*s", (int)name_len, entry->d_name);
 
-        can_interface[free_index].id = if_nametoindex(entry->d_name);
         can_interface[free_index].vendor = CAN_VENDOR_SOCKETCAN;
         can_interface[free_index].opened = 0;
         can_interface[free_index].baudrate = CAN_BAUD_1M;
@@ -332,9 +334,20 @@ CANVENIENT_API int can_open(int index)
     {
         case CAN_VENDOR_PEAK:
         {
-            if (PCAN_ERROR_OK == CAN_Initialize((WORD)can_interface[index].id, can_interface[index].baudrate, 0, 0, 0))
+            TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
+            TPCANStatus pcan_status;
+
+            pcan_status = CAN_Initialize(
+                pcan_ch,
+                can_interface[index].baudrate, 0, 0, 0);
+
+            if (PCAN_ERROR_OK == pcan_status)
             {
                 can_interface[index].opened = 1;
+            }
+            else
+            {
+                return -1;
             }
             break;
         }
@@ -425,6 +438,8 @@ CANVENIENT_API int can_open(int index)
             can_interface[index].opened = 1;
             break;
         }
+        case CAN_VENDOR_NONE:
+        case CAN_VENDOR_SOCKETCAN:
         default:
             return -1;
     }
@@ -433,8 +448,36 @@ CANVENIENT_API int can_open(int index)
 
     if (can_interface[index].name)
     {
+        struct sockaddr_can addr;
+        struct ifreq ifr;
+        int buffer_size = 1024 * 1024; /* 1MB */
+        int enable_timestamp = 1;
+        int* can_socket = can_interface[index].internal;
+
+        *can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+        if (*can_socket < 0)
+        {
+            return -1;
+        }
+
+        setsockopt(*can_socket, SOL_SOCKET, SO_SNDBUF, &buffer_size, sizeof(buffer_size));
+        setsockopt(*can_socket, SOL_SOCKET, SO_TIMESTAMP, &enable_timestamp, sizeof(enable_timestamp));
+
+        strcpy(ifr.ifr_name, can_interface[index].name);
+        if (ioctl(*can_socket, SIOCGIFINDEX, &ifr) < 0)
+        {
+            return -1;
+        }
+
+        addr.can_family = AF_CAN;
+        addr.can_ifindex = ifr.ifr_ifindex;
+
+        if (bind(*can_socket, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+        {
+            return 1;
+        }
+
         can_interface[index].opened = 1;
-        // (int)can_interface[index].internal = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     }
     else
     {
@@ -468,7 +511,7 @@ CANVENIENT_API void can_close(int index)
     {
         case CAN_VENDOR_PEAK:
         {
-            CAN_Uninitialize((WORD)can_interface[index].id);
+            CAN_Uninitialize(((TPCANChannelInformation*)can_interface[index].internal)->channel_handle);
             break;
         }
         case CAN_VENDOR_IXXAT:
@@ -496,9 +539,17 @@ CANVENIENT_API void can_close(int index)
             break;
         }
         case CAN_VENDOR_NONE:
+        case CAN_VENDOR_SOCKETCAN:
         default:
             break;
     }
+#elif defined __linux__
+    if (can_interface[index].name)
+    {
+        int* can_socket = can_interface[index].internal;
+        close(*can_socket);
+    }
+
 #endif
 
     can_interface[index].vendor = CAN_VENDOR_NONE;
@@ -618,7 +669,66 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
         return -1;
     }
 
-    (void)frame;
+#ifdef _WIN32
+
+    switch (can_interface[index].vendor)
+    {
+        case CAN_VENDOR_PEAK:
+        {
+            TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
+            TPCANStatus pcan_status;
+            TPCANMsg pcan_frame = {0};
+
+            pcan_frame.ID = frame->can_id;
+            pcan_frame.LEN = frame->can_dlc;
+
+            /* pcan_frame.MSGTYPE = PCAN_MESSAGE_EXTENDED; */
+            pcan_frame.MSGTYPE = PCAN_MESSAGE_STANDARD;
+
+            for (int i = 0; i < 8; i += 1)
+            {
+                pcan_frame.DATA[i] = frame->data[i];
+            }
+
+            pcan_status = CAN_Write(
+                pcan_ch,
+                &pcan_frame);
+
+            if (PCAN_ERROR_OK != pcan_status)
+            {
+                return -1;
+            }
+
+            break;
+        }
+        case CAN_VENDOR_IXXAT:
+        {
+            break;
+        }
+        case CAN_VENDOR_NONE:
+        case CAN_VENDOR_SOCKETCAN:
+            break;
+    }
+
+#elif defined __linux__
+
+    int* can_socket = can_interface[index].internal;
+    long num_bytes;
+
+    if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)
+    {
+        return -1;
+    }
+
+    num_bytes = write(*can_socket, frame, sizeof(struct can_frame));
+    usleep(1000); /* 1ms. */
+
+    if (-1 == num_bytes)
+    {
+        return -1;
+    }
+#endif
+
     return 0;
 }
 
@@ -629,7 +739,89 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame)
         return -1;
     }
 
-    (void)frame;
+#ifdef _WIN32
+
+    switch (can_interface[index].vendor)
+    {
+        case CAN_VENDOR_PEAK:
+        {
+            TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
+            TPCANStatus pcan_status;
+            TPCANMsg pcan_frame = {0};
+            TPCANTimestamp pcan_timestamp = {0};
+
+            pcan_status = CAN_Read(pcan_ch, &pcan_frame, &pcan_timestamp);
+            if (PCAN_ERROR_OK != pcan_status)
+            {
+                return -1;
+            }
+
+            frame->can_id = pcan_frame.ID;
+            frame->can_dlc = pcan_frame.LEN;
+            frame->timestamp =
+                pcan_timestamp.micros + (1000ULL * pcan_timestamp.millis) + (0x100000000ULL * 1000ULL * pcan_timestamp.millis_overflow);
+
+            for (int i = 0; i < 8; i += 1)
+            {
+                frame->data[i] = pcan_frame.DATA[i];
+            }
+
+            break;
+        }
+        case CAN_VENDOR_IXXAT:
+        {
+            return -1; /* Not yet implemented. */
+        }
+        case CAN_VENDOR_NONE:
+        case CAN_VENDOR_SOCKETCAN:
+            break;
+    }
+
+#elif defined __linux__
+
+    struct msghdr msg;
+    struct iovec iov;
+    char ctrlmsg[CMSG_SPACE(sizeof(struct timeval))];
+    struct cmsghdr* cmsg;
+    /* struct timeval* tv; */
+    int nbytes;
+
+    if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)
+    {
+        return -1;
+    }
+
+    iov.iov_base = frame;
+    iov.iov_len = sizeof(struct can_frame);
+
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = &ctrlmsg;
+    msg.msg_controllen = sizeof(ctrlmsg);
+    msg.msg_flags = 0;
+
+    nbytes = recvmsg(*(int*)can_interface[index].internal, &msg, 0);
+    if (nbytes < 0)
+    {
+        return -1;
+    }
+
+    for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg))
+    {
+        if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMP)
+        {
+            /* Not sure where to store it yet. */
+
+            /* tv = (struct timeval*)CMSG_DATA(cmsg); */
+            /* frame->timestamp = tv->tv_sec * 1000000ULL + tv->tv_usec; */
+            break;
+        }
+    }
+
+#endif
+
     return 0;
 }
 

@@ -32,6 +32,7 @@ if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     PUBLIC
     /W4
     /utf-8
+    /wd4201 # nonstandard extension used: nameless struct/union
   )
 
 else()
