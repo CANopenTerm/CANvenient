@@ -1,4 +1,4 @@
-/** @file CANvenient.c
+/** @file CANvenient.h
  *
  *  CANvenient is an abstraction layer for multiple CAN APIs on
  *  Windows and Linux.
@@ -92,7 +92,6 @@ CANVENIENT_API int can_find_interfaces(void);
 CANVENIENT_API void can_free_interfaces(void);
 
 CANVENIENT_API int can_open(int index);
-CANVENIENT_API int can_open_fd(int index);
 CANVENIENT_API void can_close(int index);
 
 CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size);
