@@ -67,6 +67,7 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 #include <linux/can.h>
 #include <linux/can/raw.h>
 #include <libsocketcan.h>
+#include <time.h>
 #include <unistd.h>
 #endif
 
@@ -714,6 +715,9 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
 
     int* can_socket = can_interface[index].internal;
     long num_bytes;
+    struct timespec ts = {0};
+
+    nanosleep(&ts, NULL);
 
     if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)
     {
@@ -721,7 +725,10 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
     }
 
     num_bytes = write(*can_socket, frame, sizeof(struct can_frame));
-    usleep(1000); /* 1ms. */
+
+    ts.tv_sec = 0;
+    ts.tv_nsec = 1000000; // 1 ms = 1,000,000 ns
+    nanosleep(&ts, NULL);
 
     if (-1 == num_bytes)
     {
