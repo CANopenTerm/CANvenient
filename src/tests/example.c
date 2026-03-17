@@ -23,19 +23,18 @@ int main()
 
             if (0 == can_open(i))
             {
-                struct can_frame out_frame = {0};
-                struct can_frame in_frame = {0};
+                struct can_frame frame = {0};
 
                 printf("[%d] %s -> opened\n", i, name);
 
-                out_frame.can_id = 0x123;
-                out_frame.data[0] = 0xDE;
-                out_frame.data[1] = 0xAD;
-                out_frame.data[2] = 0xBE;
-                out_frame.data[3] = 0xEF;
-                out_frame.can_dlc = 4;
+                frame.can_id = 0x123;
+                frame.data[0] = 0xDE;
+                frame.data[1] = 0xAD;
+                frame.data[2] = 0xBE;
+                frame.data[3] = 0xEF;
+                frame.can_dlc = 4;
 
-                if (can_send(i, &out_frame) < 0)
+                if (can_send(i, &frame) < 0)
                 {
                     printf("Failed to send CAN frame on interface %d\n", i);
                 }
