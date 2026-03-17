@@ -105,11 +105,9 @@ int socketcan_find_interfaces(void)
 
     closedir(dir);
 
-    return 0;
-
-#else
-    return 0;
 #endif
+
+    return 0;
 }
 
 int socketcan_open(int index)

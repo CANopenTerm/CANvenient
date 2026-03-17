@@ -9,6 +9,8 @@ add_library(
   ${PROJECT_NAME}
   SHARED
   ${CMAKE_CURRENT_SOURCE_DIR}/src/CANvenient.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_Ixxat.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_PEAK.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_SocketCAN.c
 )
 
