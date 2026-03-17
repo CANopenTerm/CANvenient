@@ -62,6 +62,7 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 
 #elif defined __linux__
 #include <dirent.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <linux/can.h>
@@ -453,6 +454,7 @@ CANVENIENT_API int can_open(int index)
         struct ifreq ifr;
         int buffer_size = 1024 * 1024; /* 1MB */
         int enable_timestamp = 1;
+        int flags;
         int* can_socket = can_interface[index].internal;
 
         *can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -477,6 +479,9 @@ CANVENIENT_API int can_open(int index)
         {
             return 1;
         }
+
+        flags = fcntl(*can_socket, F_GETFL, 0);
+        fcntl(*can_socket, F_SETFL, flags | O_NONBLOCK);
 
         can_interface[index].opened = 1;
     }
@@ -809,7 +814,7 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame)
     msg.msg_controllen = sizeof(ctrlmsg);
     msg.msg_flags = 0;
 
-    nbytes = recvmsg(*(int*)can_interface[index].internal, &msg, 0);
+    nbytes = recvmsg(*(int*)can_interface[index].internal, &msg, MSG_DONTWAIT);
     if (nbytes < 0)
     {
         return -1;

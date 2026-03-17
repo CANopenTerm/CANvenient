@@ -39,15 +39,6 @@ int main()
                 {
                     printf("Failed to send CAN frame on interface %d\n", i);
                 }
-
-                if (can_recv(i, &in_frame) < 0)
-                {
-                    printf("Failed to receive CAN frame on interface %d\n", i);
-                }
-                else
-                {
-                    printf("%03X [%d] %02X %02X %02X %02X\n", in_frame.can_id, in_frame.can_dlc, in_frame.data[0], in_frame.data[1], in_frame.data[2], in_frame.data[3]);
-                }
             }
         }
     }
