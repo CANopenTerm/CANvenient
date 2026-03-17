@@ -105,13 +105,11 @@ int ixxat_find_interfaces(void)
                                     ctx->pReader = NULL;
                                     ctx->pWriter = NULL;
 
-                                    snprintf(can_interface[ch_count].name, name_len + 1, "%s", socket_name);
-                                    can_interface[ch_count].vendor = CAN_VENDOR_IXXAT;
-                                    can_interface[ch_count].opened = 0;
-                                    can_interface[ch_count].baudrate = CAN_BAUD_1M;
-                                    can_interface[ch_count].internal = ctx;
-
-                                    ch_count++;
+                                    snprintf(can_interface[free_index].name, name_len + 1, "%s", socket_name);
+                                    can_interface[free_index].vendor = CAN_VENDOR_IXXAT;
+                                    can_interface[free_index].opened = 0;
+                                    can_interface[free_index].baudrate = CAN_BAUD_1M;
+                                    can_interface[free_index].internal = ctx;
                                 }
                             }
                         }

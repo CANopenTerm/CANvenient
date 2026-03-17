@@ -106,10 +106,7 @@ int peak_open(int index)
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
 
-    pcan_status = CAN_Initialize(
-        pcan_ch,
-        can_interface[index].baudrate, 0, 0, 0);
-
+    pcan_status = CAN_Initialize(pcan_ch, can_interface[index].baudrate, 0, 0, 0);
     if (PCAN_ERROR_OK != pcan_status)
     {
         return -1;
@@ -140,7 +137,9 @@ void peak_close(int index)
 int peak_set_baudrate(int index, enum can_baudrate baud)
 {
 #ifdef _WIN32
-
+    (void)index;
+    (void)baud;
+    return -1;
 #else
     (void)index;
     (void)baud;
