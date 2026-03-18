@@ -35,7 +35,7 @@ struct can_iface
 };
 
 extern struct can_iface can_interface[CAN_MAX_INTERFACES];
-extern char can_error_reason[256];
+extern char can_error_reason[1024];
 
 int find_free_interface_slot(u32* index);
 void set_error_reason(const char* reason);

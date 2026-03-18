@@ -18,7 +18,7 @@
 #include "drivers/CANvenient_PEAK.h"
 
 struct can_iface can_interface[CAN_MAX_INTERFACES] = {0};
-char can_error_reason[256] = {0};
+char can_error_reason[1024] = {0};
 
 CANVENIENT_API int can_find_interfaces(void)
 {
@@ -223,4 +223,5 @@ int find_free_interface_slot(u32* index)
 
 void set_error_reason(const char* reason)
 {
+    snprintf(can_error_reason, sizeof(can_error_reason), "%s", reason);
 }
