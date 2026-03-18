@@ -94,6 +94,7 @@ CANVENIENT_API void can_free_interfaces(void);
 CANVENIENT_API int can_open(int index);
 CANVENIENT_API void can_close(int index);
 
+CANVENIENT_API void can_get_error_reason(char* reason_buf, size_t buf_size);
 CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size);
 
 CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud);
