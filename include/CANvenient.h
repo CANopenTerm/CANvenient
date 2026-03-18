@@ -24,6 +24,7 @@ typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
+typedef uint32_t canid_t;
 
 #elif __linux__
 #define CANVENIENT_API __attribute__((visibility("default")))
@@ -68,21 +69,26 @@ enum can_baudrate
 
 /*
  * CAN message frame.
+ *
+ * This is a drop-in replacement for the Linux can_frame struct defined in linux/can.h.
  */
+#pragma pack(push, 1)
 struct can_frame
 {
-    u32 can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+    canid_t can_id;
     union
     {
         u8 len;
-        u8 can_dlc; /* frame payload length in byte (0 .. CAN_MAX_DLEN) */
+        u8 can_dlc;
     };
 
-    u8 pad;      /* padding */
-    u8 res0;     /* reserved / padding */
-    u8 len8_dlc; /* optional DLC for 8 byte payload length (9 .. 15) */
-    u8 data[CAN_MAX_DLEN];
+    u8 __pad;
+    u8 __res0;
+    u8 len8_dlc;
+
+    __declspec(align(8)) u8 data[CAN_MAX_DLEN];
 };
+#pragma pack(pop)
 
 #endif
 
