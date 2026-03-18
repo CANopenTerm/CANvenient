@@ -158,10 +158,11 @@ void peak_close(int index)
 int peak_set_baudrate(int index, enum can_baudrate baud)
 {
 #ifdef _WIN32
-    set_error_reason("Not yet implemented.");
-    (void)index;
-    (void)baud;
-    return -1;
+
+    can_close(index);
+    can_interface[index].baudrate = baud;
+    return can_open(index);
+
 #else
     set_error_reason("PEAK driver is only supported on Windows.");
     (void)index;
