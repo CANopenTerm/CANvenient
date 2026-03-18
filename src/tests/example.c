@@ -67,7 +67,7 @@ int main()
         {
             char error_reason[256] = {0};
             can_get_error_reason(error_reason, sizeof(error_reason));
-            printf("%s\n", error_reason);
+            // printf("%s\n", error_reason);
         }
         else
         {

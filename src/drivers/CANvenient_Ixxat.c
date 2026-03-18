@@ -298,7 +298,6 @@ int ixxat_send(int index, struct can_frame* frame)
         return -1;
     }
 
-    set_error_reason("No error. Success.");
     return 0;
 
 #else
@@ -345,7 +344,6 @@ int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
         frame->data[i] = msg.abData[i];
     }
 
-    set_error_reason("No error. Success.");
     return 0;
 
 #else

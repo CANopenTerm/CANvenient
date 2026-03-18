@@ -201,6 +201,8 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
             return peak_recv(index, frame, timestamp);
         case CAN_VENDOR_IXXAT:
             return ixxat_recv(index, frame, timestamp);
+        case CAN_VENDOR_SOCKETCAN:
+            return socketcan_recv(index, frame, timestamp);
         default:
         case CAN_VENDOR_NONE:
             return -1;

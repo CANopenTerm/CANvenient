@@ -8,6 +8,7 @@
  *
  **/
 
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -120,12 +121,12 @@ int socketcan_open(int index)
         struct ifreq ifr;
         int buffer_size = 1024 * 1024; /* 1MB */
         int enable_timestamp = 1;
-        int flags;
         int* can_socket = can_interface[index].internal;
 
         *can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
         if (*can_socket < 0)
         {
+            set_error_reason("socketcan_open: failed to create socket");
             return -1;
         }
 
@@ -135,6 +136,7 @@ int socketcan_open(int index)
         strcpy(ifr.ifr_name, can_interface[index].name);
         if (ioctl(*can_socket, SIOCGIFINDEX, &ifr) < 0)
         {
+            set_error_reason("socketcan_open: ioctl SIOCGIFINDEX failed");
             return -1;
         }
 
@@ -143,11 +145,14 @@ int socketcan_open(int index)
 
         if (bind(*can_socket, (struct sockaddr*)&addr, sizeof(addr)) < 0)
         {
+            set_error_reason("socketcan_open: bind failed");
             return 1;
         }
 
-        flags = fcntl(*can_socket, F_GETFL, 0);
-        fcntl(*can_socket, F_SETFL, flags | O_NONBLOCK);
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 1000; /* 1 ms receive timeout */
+        setsockopt(*can_socket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
         can_interface[index].opened = 1;
 
@@ -155,6 +160,7 @@ int socketcan_open(int index)
     }
     else
     {
+        set_error_reason("socketcan_open: invalid CAN interface");
         return -1;
     }
 
@@ -252,6 +258,7 @@ int socketcan_send(int index, struct can_frame* frame)
 
     if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)
     {
+        set_error_reason("socketcan_send: invalid CAN interface");
         return -1;
     }
 
@@ -263,6 +270,7 @@ int socketcan_send(int index, struct can_frame* frame)
 
     if (-1 == num_bytes)
     {
+        set_error_reason("socketcan_send: write failed");
         return -1;
     }
 
@@ -288,6 +296,7 @@ int socketcan_recv(int index, struct can_frame* frame, u64* timestamp)
 
     if (can_interface[index].vendor != CAN_VENDOR_SOCKETCAN)
     {
+        set_error_reason("socketcan_recv: invalid CAN interface");
         return -1;
     }
 
@@ -302,9 +311,18 @@ int socketcan_recv(int index, struct can_frame* frame, u64* timestamp)
     msg.msg_controllen = sizeof(ctrlmsg);
     msg.msg_flags = 0;
 
-    nbytes = recvmsg(*(int*)can_interface[index].internal, &msg, MSG_DONTWAIT);
+    nbytes = recvmsg(*(int*)can_interface[index].internal, &msg, 0);
     if (nbytes < 0)
     {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            set_error_reason("socketcan_recv: timeout, no data received");
+        }
+        else
+        {
+            set_error_reason("socketcan_recv: recvmsg failed");
+        }
+
         return -1;
     }
 

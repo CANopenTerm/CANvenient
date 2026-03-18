@@ -103,7 +103,6 @@ int peak_find_interfaces(void)
 
 #endif
 
-    set_error_reason("No error. Success.");
     return 0;
 }
 
@@ -122,7 +121,6 @@ int peak_open(int index)
     }
     else
     {
-        set_error_reason("No error. Success.");
         can_interface[index].opened = 1;
         return 0;
     }
@@ -143,10 +141,6 @@ void peak_close(int index)
     if (PCAN_ERROR_OK != pcan_status)
     {
         set_error_reason(lookup_error_string(pcan_status));
-    }
-    else
-    {
-        set_error_reason("No error. Success.");
     }
 
 #else
@@ -198,7 +192,6 @@ int peak_send(int index, struct can_frame* frame)
         return -1;
     }
 
-    set_error_reason("No error. Success.");
     return 0;
 
 #else
@@ -235,7 +228,6 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
         frame->data[i] = pcan_frame.DATA[i];
     }
 
-    set_error_reason("No error. Success.");
     return 0;
 
 #else
