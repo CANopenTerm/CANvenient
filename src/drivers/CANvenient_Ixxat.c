@@ -270,9 +270,37 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
 int ixxat_send(int index, struct can_frame* frame)
 {
 #ifdef _WIN32
-    (void)index;
-    (void)frame;
-    return -1;
+
+    ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
+    CANMSG msg = {0};
+    HRESULT hr;
+    int i;
+
+    if (NULL == ctx || NULL == ctx->pWriter)
+    {
+        set_error_reason("Channel not open.");
+        return -1;
+    }
+
+    msg.dwMsgId = frame->can_id;
+    msg.uMsgInfo.Bytes.bType = CAN_MSGTYPE_DATA;
+    msg.uMsgInfo.Bytes.bFlags = (frame->can_dlc & CAN_MSGFLAGS_DLC);
+
+    for (i = 0; i < frame->can_dlc && i < 8; i += 1)
+    {
+        msg.abData[i] = frame->data[i];
+    }
+
+    hr = ctx->pWriter->lpVtbl->PutDataEntry(ctx->pWriter, &msg);
+    if (FAILED(hr))
+    {
+        set_error_reason("Failed to send CAN message.");
+        return -1;
+    }
+
+    set_error_reason("No error. Success.");
+    return 0;
+
 #else
     (void)index;
     (void)frame;
@@ -283,10 +311,43 @@ int ixxat_send(int index, struct can_frame* frame)
 int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
 {
 #ifdef _WIN32
-    (void)index;
-    (void)frame;
-    (void)timestamp;
-    return -1;
+
+    ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
+    CANMSG msg = {0};
+    HRESULT hr;
+    int i;
+
+    if (NULL == ctx || NULL == ctx->pReader)
+    {
+        set_error_reason("Channel not open.");
+        return -1;
+    }
+
+    hr = ctx->pReader->lpVtbl->GetDataEntry(ctx->pReader, &msg);
+    if (S_OK != hr)
+    {
+        set_error_reason("No message available.");
+        return -1;
+    }
+
+    if (CAN_MSGTYPE_DATA != msg.uMsgInfo.Bytes.bType)
+    {
+        set_error_reason("No message available.");
+        return -1;
+    }
+
+    frame->can_id = msg.dwMsgId;
+    frame->can_dlc = msg.uMsgInfo.Bytes.bFlags & CAN_MSGFLAGS_DLC;
+    *timestamp = (u64)msg.dwTime;
+
+    for (i = 0; i < frame->can_dlc && i < 8; i += 1)
+    {
+        frame->data[i] = msg.abData[i];
+    }
+
+    set_error_reason("No error. Success.");
+    return 0;
+
 #else
     (void)index;
     (void)frame;
