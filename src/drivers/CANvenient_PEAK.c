@@ -15,12 +15,12 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <PCANBasic.h>
+
+static char* lookup_error_string(TPCANStatus pcan_status);
 #endif
 
 #include "CANvenient.h"
 #include "CANvenient_internal.h"
-
-static char* lookup_error_string(TPCANStatus pcan_status);
 
 int peak_find_interfaces(void)
 {
@@ -247,12 +247,13 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 #endif
 }
 
+#ifdef _WIN32
 static char* lookup_error_string(TPCANStatus pcan_status)
 {
     static char error_buf[1024];
-    size_t      offset = 0;
-    int         found  = 0;
-    size_t      i;
+    size_t offset = 0;
+    int found = 0;
+    size_t i;
 
     /* Some PCAN status codes share bits (e.g. ILLHW, ILLNET, ILLCLIENT all
        overlap with HWINUSE / NETINUSE).  Using a (value, mask) pair lets us
@@ -264,37 +265,37 @@ static char* lookup_error_string(TPCANStatus pcan_status)
         const char* msg;
 
     } error_table[] =
-    {
-        { PCAN_ERROR_XMTFULL,      PCAN_ERROR_XMTFULL,       "Transmit buffer in CAN controller is full." },
-        { PCAN_ERROR_OVERRUN,      PCAN_ERROR_OVERRUN,       "CAN controller was read too late." },
-        { PCAN_ERROR_BUSLIGHT,     PCAN_ERROR_BUSLIGHT,      "Bus error: an error counter reached the 'light' limit." },
-        { PCAN_ERROR_BUSHEAVY,     PCAN_ERROR_BUSHEAVY,      "Bus error: an error counter reached the 'heavy' limit." },
-        { PCAN_ERROR_BUSPASSIVE,   PCAN_ERROR_BUSPASSIVE,    "Bus error: the CAN controller is error passive." },
-        { PCAN_ERROR_BUSOFF,       PCAN_ERROR_BUSOFF,        "Bus error: the CAN controller is in bus-off state." },
-        { PCAN_ERROR_QRCVEMPTY,    PCAN_ERROR_QRCVEMPTY,     "Receive queue is empty." },
-        { PCAN_ERROR_QOVERRUN,     PCAN_ERROR_QOVERRUN,      "Receive queue was read too late." },
-        { PCAN_ERROR_QXMTFULL,     PCAN_ERROR_QXMTFULL,      "Transmit queue is full." },
-        { PCAN_ERROR_REGTEST,      PCAN_ERROR_REGTEST,       "Test of the CAN controller hardware registers failed (no hardware found)." },
-        { PCAN_ERROR_NODRIVER,     PCAN_ERROR_NODRIVER,      "Driver not loaded." },
-        /* HWINUSE (0x0400), NETINUSE (0x0800), ILLHW (0x1400), ILLNET (0x1800)
-           and ILLCLIENT (0x1C00) all share bits within the 0x1C00 mask.
-           Each entry is therefore matched against that common mask so that
-           only the intended code is reported. */
-        { PCAN_ERROR_HWINUSE,      PCAN_ERROR_ILLCLIENT,     "PCAN-Hardware already in use by a PCAN-Net." },
-        { PCAN_ERROR_NETINUSE,     PCAN_ERROR_ILLCLIENT,     "A PCAN-Client is already connected to the PCAN-Net." },
-        { PCAN_ERROR_ILLHW,        PCAN_ERROR_ILLCLIENT,     "PCAN-Hardware handle is invalid." },
-        { PCAN_ERROR_ILLNET,       PCAN_ERROR_ILLCLIENT,     "PCAN-Net handle is invalid." },
-        { PCAN_ERROR_ILLCLIENT,    PCAN_ERROR_ILLCLIENT,     "PCAN-Client handle is invalid." },
-        { PCAN_ERROR_RESOURCE,     PCAN_ERROR_RESOURCE,      "Resource (FIFO, Client, timeout) cannot be created." },
-        { PCAN_ERROR_ILLPARAMTYPE, PCAN_ERROR_ILLPARAMTYPE,  "Invalid parameter." },
-        { PCAN_ERROR_ILLPARAMVAL,  PCAN_ERROR_ILLPARAMVAL,   "Invalid parameter value." },
-        { PCAN_ERROR_UNKNOWN,      PCAN_ERROR_UNKNOWN,       "Unknown error." },
-        { PCAN_ERROR_ILLDATA,      PCAN_ERROR_ILLDATA,       "Invalid data, function, or action." },
-        { PCAN_ERROR_ILLMODE,      PCAN_ERROR_ILLMODE,       "Driver object state is wrong for the attempted operation." },
-        { PCAN_ERROR_CAUTION,      PCAN_ERROR_CAUTION,       "Operation succeeded but with irregularities." },
-        { PCAN_ERROR_INITIALIZE,   PCAN_ERROR_INITIALIZE,    "Channel is not initialized." },
-        { PCAN_ERROR_ILLOPERATION, PCAN_ERROR_ILLOPERATION,  "Invalid operation." },
-    };
+        {
+            {PCAN_ERROR_XMTFULL, PCAN_ERROR_XMTFULL, "Transmit buffer in CAN controller is full."},
+            {PCAN_ERROR_OVERRUN, PCAN_ERROR_OVERRUN, "CAN controller was read too late."},
+            {PCAN_ERROR_BUSLIGHT, PCAN_ERROR_BUSLIGHT, "Bus error: an error counter reached the 'light' limit."},
+            {PCAN_ERROR_BUSHEAVY, PCAN_ERROR_BUSHEAVY, "Bus error: an error counter reached the 'heavy' limit."},
+            {PCAN_ERROR_BUSPASSIVE, PCAN_ERROR_BUSPASSIVE, "Bus error: the CAN controller is error passive."},
+            {PCAN_ERROR_BUSOFF, PCAN_ERROR_BUSOFF, "Bus error: the CAN controller is in bus-off state."},
+            {PCAN_ERROR_QRCVEMPTY, PCAN_ERROR_QRCVEMPTY, "Receive queue is empty."},
+            {PCAN_ERROR_QOVERRUN, PCAN_ERROR_QOVERRUN, "Receive queue was read too late."},
+            {PCAN_ERROR_QXMTFULL, PCAN_ERROR_QXMTFULL, "Transmit queue is full."},
+            {PCAN_ERROR_REGTEST, PCAN_ERROR_REGTEST, "Test of the CAN controller hardware registers failed (no hardware found)."},
+            {PCAN_ERROR_NODRIVER, PCAN_ERROR_NODRIVER, "Driver not loaded."},
+            /* HWINUSE (0x0400), NETINUSE (0x0800), ILLHW (0x1400), ILLNET (0x1800)
+               and ILLCLIENT (0x1C00) all share bits within the 0x1C00 mask.
+               Each entry is therefore matched against that common mask so that
+               only the intended code is reported. */
+            {PCAN_ERROR_HWINUSE, PCAN_ERROR_ILLCLIENT, "PCAN-Hardware already in use by a PCAN-Net."},
+            {PCAN_ERROR_NETINUSE, PCAN_ERROR_ILLCLIENT, "A PCAN-Client is already connected to the PCAN-Net."},
+            {PCAN_ERROR_ILLHW, PCAN_ERROR_ILLCLIENT, "PCAN-Hardware handle is invalid."},
+            {PCAN_ERROR_ILLNET, PCAN_ERROR_ILLCLIENT, "PCAN-Net handle is invalid."},
+            {PCAN_ERROR_ILLCLIENT, PCAN_ERROR_ILLCLIENT, "PCAN-Client handle is invalid."},
+            {PCAN_ERROR_RESOURCE, PCAN_ERROR_RESOURCE, "Resource (FIFO, Client, timeout) cannot be created."},
+            {PCAN_ERROR_ILLPARAMTYPE, PCAN_ERROR_ILLPARAMTYPE, "Invalid parameter."},
+            {PCAN_ERROR_ILLPARAMVAL, PCAN_ERROR_ILLPARAMVAL, "Invalid parameter value."},
+            {PCAN_ERROR_UNKNOWN, PCAN_ERROR_UNKNOWN, "Unknown error."},
+            {PCAN_ERROR_ILLDATA, PCAN_ERROR_ILLDATA, "Invalid data, function, or action."},
+            {PCAN_ERROR_ILLMODE, PCAN_ERROR_ILLMODE, "Driver object state is wrong for the attempted operation."},
+            {PCAN_ERROR_CAUTION, PCAN_ERROR_CAUTION, "Operation succeeded but with irregularities."},
+            {PCAN_ERROR_INITIALIZE, PCAN_ERROR_INITIALIZE, "Channel is not initialized."},
+            {PCAN_ERROR_ILLOPERATION, PCAN_ERROR_ILLOPERATION, "Invalid operation."},
+        };
 
     if (PCAN_ERROR_OK == pcan_status)
     {
@@ -316,10 +317,11 @@ static char* lookup_error_string(TPCANStatus pcan_status)
         }
     }
 
-    if (!found)
+    if (! found)
     {
         return "Unknown error.";
     }
 
     return error_buf;
 }
+#endif /* _WIN32 */
