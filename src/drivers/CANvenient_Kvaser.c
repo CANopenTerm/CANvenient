@@ -87,7 +87,7 @@ int kvaser_find_interfaces(void)
             free(ch_info);
             return -1;
         }
-        strncpy_s(can_interface[i].name, strlen(device_name) + 1, device_name, _TRUNCATE);
+        strncpy_s(can_interface[i].name, strnlen(device_name, sizeof(device_name)) + 1, device_name, _TRUNCATE);
 
         can_interface[i].internal = ch_info;
         can_interface[i].vendor = CAN_VENDOR_KVASER;
