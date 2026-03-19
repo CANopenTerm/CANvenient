@@ -26,13 +26,19 @@ CANVENIENT_API int can_find_interfaces(void)
 {
     int status;
 
+        status = ixxat_find_interfaces();
+    if (status < 0)
+    {
+        return status;
+    }
+
     status = peak_find_interfaces();
     if (status < 0)
     {
         return status;
     }
 
-    status = ixxat_find_interfaces();
+    status = kvaser_find_interfaces();
     if (status < 0)
     {
         return status;
