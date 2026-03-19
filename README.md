@@ -10,15 +10,25 @@ write code that is portable across different platforms and CAN hardware.
 It is not yet fully functional and may contain bugs and the API is
 not yet stable and may change without deprecation.
 
-## Hardware donation? Yes, please
+## Hardware Contributions
 
-Every great abstraction layer is only as good as the hardware it has been tested
-against. If you have CAN interfaces collecting dust on a shelf - be it a
-PEAK PCAN-USB, an Ixxat USB-to-CAN, a Kvaser Leaf, a Vector CANcase, or any
-other adapter from any manufacturer - consider donating it to the project!
+Reliable behavior of CANvenient as a CAN abstraction layer depends on
+validation across a broad range of hardware implementations. Limiting testing
+to a small set of interfaces increases the risk of vendor-specific
+inconsistencies and unhandled edge cases.
 
-Each additional device helps expand real-world test coverage, enables proper
-driver integration, and ultimately makes CANvenient more reliable for everyone
-in the CAN community. Reach out by opening an issue or contacting the
-maintainers directly - your hardware donation could be the missing piece that
-unlocks support for an entirely new platform.
+Donations of unused or surplus CAN adapters—such as PEAK PCAN-USB, Ixxat
+USB-to-CAN, Kvaser Leaf, or comparable devices—enable:
+
+- Validation of CANvenient against real hardware
+
+- Detection of vendor-specific deviations and timing differences
+
+- Improved backend integration across multiple interfaces
+
+- Broader regression testing and increased platform coverage
+
+CANvenient is an open-source project with no external funding; expanding the
+set of supported interfaces strengthens portability and ensures consistent
+behavior across heterogeneous CAN environments. Contributors can initiate
+hardware donations by opening an issue or contacting the maintainers directly.
