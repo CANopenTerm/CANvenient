@@ -17,8 +17,8 @@ validation across a broad range of hardware implementations. Limiting testing
 to a small set of interfaces increases the risk of vendor-specific
 inconsistencies and unhandled edge cases.
 
-Donations of unused or surplus CAN adapters—such as PEAK PCAN-USB, Ixxat
-USB-to-CAN, Kvaser Leaf, or comparable devices—enable:
+Donations of unused or surplus CAN adapters - such as PEAK PCAN-USB, Ixxat
+USB-to-CAN, Kvaser Leaf, or comparable devices - enable:
 
 - Validation of CANvenient against real hardware
 
