@@ -85,7 +85,7 @@ if(WIN32)
     set(SOFTING_POSTFIX "")
   endif()
 
-  set(SOFTING_DEVEL_PKG  Softing_CAN_Layer2-v${SOFTING_VERSION}.zip)
+  set(SOFTING_DEVEL_PKG  Softing_CAN_Layer2-${SOFTING_VERSION}.zip)
   set(SOFTING_DEVEL_URL  https://canopenterm.de/mirror)
   set(SOFTING_DEVEL_HASH 17afeee9682673d988dec276b739fe217aa61039)
 
