@@ -10,6 +10,16 @@ write code that is portable across different platforms and CAN hardware.
 It is not yet fully functional and may contain bugs and the API is
 not yet stable and may change without deprecation.
 
+## Supported Back-Ends
+
+The following back-ends are currently implemented but not fully tested:	
+
+- Ixxat VCI
+- Kvaser CANlib
+- PCAN-Basic
+- SocketCAN
+- Softing CAN Layer 2
+
 ## Hardware Contributions
 
 Reliable behavior of CANvenient as a CAN abstraction layer depends on
