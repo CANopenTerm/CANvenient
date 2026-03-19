@@ -98,8 +98,8 @@ int softing_find_interfaces(void)
 
         snprintf(can_interface[free_index].name, name_len + 1, "%.*s", (int)name_len, channels[i].ChannelName);
         can_interface[free_index].internal = ctx;
-        can_interface[free_index].vendor   = CAN_VENDOR_SOFTING;
-        can_interface[free_index].opened   = 0;
+        can_interface[free_index].vendor = CAN_VENDOR_SOFTING;
+        can_interface[free_index].opened = 0;
         can_interface[free_index].baudrate = CAN_BAUD_1M;
     }
 
@@ -261,7 +261,6 @@ int softing_recv(int index, struct can_frame* frame, u64* timestamp)
     softing_ctx_t* ctx = (softing_ctx_t*)can_interface[index].internal;
     PARAM_STRUCT param;
     int ret;
-    int i;
 
     if (NULL == ctx || 0 == ctx->hChannel)
     {
@@ -285,11 +284,11 @@ int softing_recv(int index, struct can_frame* frame, u64* timestamp)
 
     if (CANL2_RA_DATAFRAME == ret || CANL2_RA_XTD_DATAFRAME == ret)
     {
-        frame->can_id  = (CANL2_RA_XTD_DATAFRAME == ret) ? (param.Ident | CAN_EFF_FLAG) : param.Ident;
+        frame->can_id = (CANL2_RA_XTD_DATAFRAME == ret) ? (param.Ident | CAN_EFF_FLAG) : param.Ident;
         frame->can_dlc = (u8)param.DataLength;
-        *timestamp     = (u64)param.Time;
+        *timestamp = (u64)param.Time;
 
-        for (i = 0; i < param.DataLength && i < 8; i++)
+        for (int i = 0; i < param.DataLength && i < 8; i++)
         {
             frame->data[i] = param.RCV_data[i];
         }
@@ -314,21 +313,35 @@ static double softing_baudrate_to_kbps(enum can_baudrate baud)
 {
     switch (baud)
     {
-        case CAN_BAUD_800K: return 800.0;
-        case CAN_BAUD_500K: return 500.0;
-        case CAN_BAUD_250K: return 250.0;
-        case CAN_BAUD_125K: return 125.0;
-        case CAN_BAUD_100K: return 100.0;
-        case CAN_BAUD_95K:  return 95.238;
-        case CAN_BAUD_83K:  return 83.333;
-        case CAN_BAUD_50K:  return 50.0;
-        case CAN_BAUD_47K:  return 47.619;
-        case CAN_BAUD_33K:  return 33.333;
-        case CAN_BAUD_20K:  return 20.0;
-        case CAN_BAUD_10K:  return 10.0;
-        case CAN_BAUD_5K:   return 5.0;
+        case CAN_BAUD_800K:
+            return 800.0;
+        case CAN_BAUD_500K:
+            return 500.0;
+        case CAN_BAUD_250K:
+            return 250.0;
+        case CAN_BAUD_125K:
+            return 125.0;
+        case CAN_BAUD_100K:
+            return 100.0;
+        case CAN_BAUD_95K:
+            return 95.238;
+        case CAN_BAUD_83K:
+            return 83.333;
+        case CAN_BAUD_50K:
+            return 50.0;
+        case CAN_BAUD_47K:
+            return 47.619;
+        case CAN_BAUD_33K:
+            return 33.333;
+        case CAN_BAUD_20K:
+            return 20.0;
+        case CAN_BAUD_10K:
+            return 10.0;
+        case CAN_BAUD_5K:
+            return 5.0;
         case CAN_BAUD_1M:
-        default:            return 1000.0;
+        default:
+            return 1000.0;
     }
 }
 #endif
