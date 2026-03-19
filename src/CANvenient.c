@@ -14,6 +14,7 @@
 #include "CANvenient.h"
 #include "drivers/CANvenient_internal.h"
 #include "drivers/CANvenient_Ixxat.h"
+#include "drivers/CANvenient_Kvaser.h"
 #include "drivers/CANvenient_SocketCAN.h"
 #include "drivers/CANvenient_Softing.h"
 #include "drivers/CANvenient_PEAK.h"
@@ -63,10 +64,12 @@ CANVENIENT_API int can_open(int index)
 
     switch (can_interface[index].vendor)
     {
-        case CAN_VENDOR_PEAK:
-            return peak_open(index);
         case CAN_VENDOR_IXXAT:
             return ixxat_open(index);
+        case CAN_VENDOR_KVASER:
+            return kvaser_open(index);
+        case CAN_VENDOR_PEAK:
+            return peak_open(index);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_open(index);
         case CAN_VENDOR_SOFTING:
@@ -86,14 +89,17 @@ CANVENIENT_API void can_close(int index)
 
     switch (can_interface[index].vendor)
     {
-        case CAN_VENDOR_PEAK:
-            peak_close(index);
-            break;
         case CAN_VENDOR_IXXAT:
         {
             ixxat_close(index);
             break;
         }
+        case CAN_VENDOR_KVASER:
+            kvaser_close(index);
+            break;
+        case CAN_VENDOR_PEAK:
+            peak_close(index);
+            break;
         case CAN_VENDOR_SOCKETCAN:
             socketcan_close(index);
             break;
@@ -167,12 +173,16 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
 
     switch (can_interface[index].vendor)
     {
-        case CAN_VENDOR_PEAK:
-            return peak_set_baudrate(index, baud);
         case CAN_VENDOR_IXXAT:
             return ixxat_set_baudrate(index, baud);
+        case CAN_VENDOR_KVASER:
+            return kvaser_set_baudrate(index, baud);
+        case CAN_VENDOR_PEAK:
+            return peak_set_baudrate(index, baud);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_set_baudrate(index, baud);
+        case CAN_VENDOR_SOFTING:
+            return softing_set_baudrate(index, baud);
         default:
         case CAN_VENDOR_NONE:
             return -1;
@@ -188,10 +198,12 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
 
     switch (can_interface[index].vendor)
     {
-        case CAN_VENDOR_PEAK:
-            return peak_send(index, frame);
         case CAN_VENDOR_IXXAT:
             return ixxat_send(index, frame);
+        case CAN_VENDOR_KVASER:
+            return kvaser_send(index, frame);
+        case CAN_VENDOR_PEAK:
+            return peak_send(index, frame);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_send(index, frame);
         case CAN_VENDOR_SOFTING:
@@ -211,10 +223,12 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
 
     switch (can_interface[index].vendor)
     {
-        case CAN_VENDOR_PEAK:
-            return peak_recv(index, frame, timestamp);
         case CAN_VENDOR_IXXAT:
             return ixxat_recv(index, frame, timestamp);
+        case CAN_VENDOR_KVASER:
+            return kvaser_recv(index, frame, timestamp);
+        case CAN_VENDOR_PEAK:
+            return peak_recv(index, frame, timestamp);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_recv(index, frame, timestamp);
         case CAN_VENDOR_SOFTING:

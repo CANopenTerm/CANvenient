@@ -2,40 +2,78 @@ cmake_minimum_required(VERSION 3.16)
 
 if(WIN32)
   # HMS Ixxat VCI C API
-  set(IXXAT_VCI_VERSION "4.0.1348.0")
+  set(IXXAT_VERSION "4.0.1348.0")
 
-  set(IXXAT_VCI_PLATFORM  "x64")
-  set(IXXAT_VCI_PATH      "${CMAKE_CURRENT_SOURCE_DIR}/deps/HMS_Ixxat_VCI")
+  set(IXXAT_PLATFORM  "x64")
+  set(IXXAT_PATH      "${CMAKE_CURRENT_SOURCE_DIR}/deps/HMS_Ixxat_VCI")
 
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set(IXXAT_VCI_PLATFORM "x32")
+    set(IXXAT_PLATFORM "x32")
   endif()
 
-  set(IXXAT_VCI_DEVEL_PKG  HMS_Ixxat_VCI-${IXXAT_VCI_VERSION}.zip)
-  set(IXXAT_VCI_DEVEL_URL  https://canopenterm.de/mirror)
-  set(IXXAT_VCI_DEVEL_HASH 7a6df069d6acd667631282026252d2b33b7e7507)
+  set(IXXAT_DEVEL_PKG  HMS_Ixxat_VCI-${IXXAT_VERSION}.zip)
+  set(IXXAT_DEVEL_URL  https://canopenterm.de/mirror)
+  set(IXXAT_DEVEL_HASH 7a6df069d6acd667631282026252d2b33b7e7507)
 
-  ExternalProject_Add(Ixxat_VCI_devel
-    URL ${IXXAT_VCI_DEVEL_URL}/${IXXAT_VCI_DEVEL_PKG}
-    URL_HASH SHA1=${IXXAT_VCI_DEVEL_HASH}
+  ExternalProject_Add(Ixxat_devel
+    URL ${IXXAT_DEVEL_URL}/${IXXAT_DEVEL_PKG}
+    URL_HASH SHA1=${IXXAT_DEVEL_HASH}
     DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps
     DOWNLOAD_NO_PROGRESS true
     DOWNLOAD_EXTRACT_TIMESTAMP true
     TLS_VERIFY true
-    SOURCE_DIR ${IXXAT_VCI_PATH}/
-    BUILD_BYPRODUCTS ${IXXAT_VCI_PATH}/sdk/vci/lib/${IXXAT_VCI_PLATFORM}/release/vciapi.lib
+    SOURCE_DIR ${IXXAT_PATH}/
+    BUILD_BYPRODUCTS ${IXXAT_PATH}/sdk/vci/lib/${IXXAT_PLATFORM}/release/vciapi.lib
 
     BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping build step."
 
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
-      ${IXXAT_VCI_PATH}/sdk/vci/bin/${IXXAT_VCI_PLATFORM}/release/vciapi.dll ${CMAKE_CURRENT_BINARY_DIR}/
+      ${IXXAT_PATH}/sdk/vci/bin/${IXXAT_PLATFORM}/release/vciapi.dll ${CMAKE_CURRENT_BINARY_DIR}/
 
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
-      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_ixxat.cmake" ${IXXAT_VCI_PATH}/CMakeLists.txt
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_ixxat.cmake" ${IXXAT_PATH}/CMakeLists.txt
   )
 
-  set(IXXAT_VCI_INCLUDE_DIR ${IXXAT_VCI_PATH}/sdk/vci/inc)
-  set(IXXAT_VCI_LIBRARY     ${IXXAT_VCI_PATH}/sdk/vci/lib/${IXXAT_VCI_PLATFORM}/release/vciapi.lib)
+  set(IXXAT_INCLUDE_DIR ${IXXAT_PATH}/sdk/vci/inc)
+  set(IXXAT_LIBRARY     ${IXXAT_PATH}/sdk/vci/lib/${IXXAT_PLATFORM}/release/vciapi.lib)
+
+  # Kvaser CANlib API
+  set(KVASER_VERSION "5.51.461")
+
+  set(KVASER_PLATFORM  "x64")
+  set(KVASER_PATH      "${CMAKE_CURRENT_SOURCE_DIR}/deps/Kvaser")
+  set(KVASER_BINDIR    "bin_x64")
+
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(KVASER_PLATFORM "MS")
+    set(KVASER_BINDIR   "Bin")
+  endif()
+
+  set(KVASER_DEVEL_PKG  Kvaser_Canlib-${KVASER_VERSION}.zip)
+  set(KVASER_DEVEL_URL  https://canopenterm.de/mirror)
+  set(KVASER_DEVEL_HASH c73a6ea7cf981b94d0685e561a801dbc840febcc)
+
+  ExternalProject_Add(Kvaser_devel
+    URL ${KVASER_DEVEL_URL}/${KVASER_DEVEL_PKG}
+    URL_HASH SHA1=${KVASER_DEVEL_HASH}
+    DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps
+    DOWNLOAD_NO_PROGRESS true
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+    TLS_VERIFY true
+    SOURCE_DIR ${KVASER_PATH}/
+    BUILD_BYPRODUCTS ${KVASER_PATH}/Canlib/Lib/${KVASER_PLATFORM}/canlib32.lib
+
+    BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping build step."
+
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
+      ${KVASER_PATH}/Canlib/${KVASER_BINDIR}/canlib32.dll ${CMAKE_CURRENT_BINARY_DIR}/
+
+    PATCH_COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_kvaser.cmake" ${KVASER_PATH}/CMakeLists.txt
+  )
+
+  set(KVASER_INCLUDE_DIR ${KVASER_PATH}/Canlib/INC)
+  set(KVASER_LIBRARY     ${KVASER_PATH}/Canlib/Lib/${KVASER_PLATFORM}/canlib32.lib)
 
   # PCAN-Basic API
   set(PCAN_VERSION "5.0.0.1115")
@@ -112,19 +150,23 @@ if(WIN32)
   set(SOFTING_LIBRARY     "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.lib")
 
   set(PLATFORM_DEPS
-    Ixxat_VCI_devel
+    Ixxat_devel
+    Kvaser_devel
     PCAN_devel
     Softing_devel
   )
 
   set(PLATFORM_LIBS
-    ${IXXAT_VCI_LIBRARY}
+    ${IXXAT_LIBRARY}
+    ${KVASER_LIBRARY}
     ${PCAN_LIBRARY}
     ${SOFTING_LIBRARY}
   )
 
   include_directories(
-    SYSTEM ${IXXAT_VCI_INCLUDE_DIR}
+    SYSTEM ${IXXAT_INCLUDE_DIR}
+    SYSTEM ${KVASER_INCLUDE_DIR}
+    SYSTEM ${KVASER_INCLUDE_DIR}/extras
     SYSTEM ${PCAN_INCLUDE_DIR}
     SYSTEM ${PCAN_INCLUDE_DIR}/../src/pcan/driver
     SYSTEM ${PCAN_INCLUDE_DIR}/../src/pcan/lib
@@ -133,7 +175,8 @@ if(WIN32)
 
   add_dependencies(
     ${PROJECT_NAME}
-    Ixxat_VCI_devel
+    Ixxat_devel
+    Kvaser_devel
     PCAN_devel
     Softing_devel
   )

@@ -1,2 +1,2 @@
 cmake_minimum_required(VERSION 3.16)
-project(Ixxat_devel C)
+project(Kvaser_devel C)
