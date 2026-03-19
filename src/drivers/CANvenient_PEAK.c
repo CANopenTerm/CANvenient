@@ -135,6 +135,7 @@ int peak_open(int index)
 void peak_close(int index)
 {
 #ifdef _WIN32
+
     TPCANStatus pcan_status;
 
     pcan_status = CAN_Uninitialize(((TPCANChannelInformation*)can_interface[index].internal)->channel_handle);

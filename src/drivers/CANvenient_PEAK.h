@@ -8,6 +8,8 @@
  *
  **/
 
+#include "CANvenient.h"
+
 int peak_find_interfaces(void);
 
 int peak_open(int index);

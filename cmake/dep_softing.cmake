@@ -1,2 +1,2 @@
 cmake_minimum_required(VERSION 3.16)
-project(Ixxat_VCI_devel C)
+project(Softing_devel C)

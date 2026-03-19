@@ -12,6 +12,7 @@ add_library(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_Ixxat.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_PEAK.c
   ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_SocketCAN.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/drivers/CANvenient_Softing.c
 )
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 99)

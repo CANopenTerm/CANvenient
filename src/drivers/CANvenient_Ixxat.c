@@ -121,6 +121,7 @@ int ixxat_find_interfaces(void)
         }
         pDevMan->lpVtbl->Release(pDevMan);
     }
+
 #endif
 
     return 0;
@@ -145,12 +146,14 @@ int ixxat_open(int index)
     ctx = (ixxat_ctx_t*)can_interface[index].internal;
     if (NULL == ctx)
     {
+        set_error_reason("Internal error: context is NULL.");
         return -1;
     }
 
     hr = VciGetDeviceManager(&pDevMan);
     if (FAILED(hr) || NULL == pDevMan)
     {
+        set_error_reason("Failed to get device manager.");
         return -1;
     }
 
@@ -158,6 +161,7 @@ int ixxat_open(int index)
     pDevMan->lpVtbl->Release(pDevMan);
     if (FAILED(hr) || NULL == pDevice)
     {
+        set_error_reason("Failed to open device.");
         return -1;
     }
 
@@ -185,6 +189,7 @@ int ixxat_open(int index)
     pBal->lpVtbl->Release(pBal);
     if (FAILED(hr) || NULL == pSocket)
     {
+        set_error_reason("Failed to open CAN socket.");
         return -1;
     }
 
@@ -192,6 +197,7 @@ int ixxat_open(int index)
     pSocket->lpVtbl->Release(pSocket);
     if (FAILED(hr) || NULL == pChannel)
     {
+        set_error_reason("Failed to create CAN channel.");
         return -1;
     }
 
@@ -199,6 +205,7 @@ int ixxat_open(int index)
     if (FAILED(hr))
     {
         pChannel->lpVtbl->Release(pChannel);
+        set_error_reason("Failed to initialize CAN channel.");
         return -1;
     }
 
@@ -206,6 +213,7 @@ int ixxat_open(int index)
     if (FAILED(hr))
     {
         pChannel->lpVtbl->Release(pChannel);
+        set_error_reason("Failed to activate CAN channel.");
         return -1;
     }
 
@@ -217,6 +225,7 @@ int ixxat_open(int index)
     return 0;
 
 #else
+    set_error_reason("Ixxat driver is only supported on Windows.");
     (void)index;
     return -1;
 #endif
@@ -248,6 +257,7 @@ void ixxat_close(int index)
     }
 
 #else
+    set_error_reason("Ixxat driver is only supported on Windows.");
     (void)index;
 #endif
 }
@@ -256,11 +266,119 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
 {
 #ifdef _WIN32
 
-    (void)index;
-    (void)baud;
-    return -1;
+    ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
+    IVciDeviceManager* pDevMan = NULL;
+    IVciDevice* pDevice = NULL;
+    IBalObject* pBal = NULL;
+    ICanControl* pControl = NULL;
+    ICanSocket* pSocket = NULL;
+    ICanChannel* pChannel = NULL;
+    CANINITLINE initLine;
+    HRESULT hr;
+    u8 bt0;
+    u8 bt1;
+
+    if (NULL == ctx)
+    {
+        set_error_reason("Internal error: context is NULL.");
+        return -1;
+    }
+
+    /* Release existing channel resources. */
+    if (ctx->pWriter)
+    {
+        ctx->pWriter->lpVtbl->Release(ctx->pWriter);
+        ctx->pWriter = NULL;
+    }
+    if (ctx->pReader)
+    {
+        ctx->pReader->lpVtbl->Release(ctx->pReader);
+        ctx->pReader = NULL;
+    }
+    if (ctx->pChannel)
+    {
+        ctx->pChannel->lpVtbl->Deactivate(ctx->pChannel);
+        ctx->pChannel->lpVtbl->Release(ctx->pChannel);
+        ctx->pChannel = NULL;
+    }
+
+    hr = VciGetDeviceManager(&pDevMan);
+    if (FAILED(hr) || NULL == pDevMan)
+    {
+        set_error_reason("Failed to get device manager.");
+        return -1;
+    }
+
+    hr = pDevMan->lpVtbl->OpenDevice(pDevMan, &ctx->device_id, &pDevice);
+    pDevMan->lpVtbl->Release(pDevMan);
+    if (FAILED(hr) || NULL == pDevice)
+    {
+        set_error_reason("Failed to open device.");
+        return -1;
+    }
+
+    hr = pDevice->lpVtbl->OpenComponent(pDevice, &CLSID_VCIBAL, &IID_IBalObject, (PVOID*)&pBal);
+    pDevice->lpVtbl->Release(pDevice);
+    if (FAILED(hr) || NULL == pBal)
+    {
+        set_error_reason("Failed to open BAL component.");
+        return -1;
+    }
+
+    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanControl, (PVOID*)&pControl);
+    if (SUCCEEDED(hr) && NULL != pControl)
+    {
+        ixxat_baudrate_to_btr(baud, &bt0, &bt1);
+        initLine.bOpMode = CAN_OPMODE_STANDARD | CAN_OPMODE_EXTENDED | CAN_OPMODE_ERRFRAME;
+        initLine.bReserved = 0;
+        initLine.bBtReg0 = bt0;
+        initLine.bBtReg1 = bt1;
+        pControl->lpVtbl->InitLine(pControl, &initLine);
+        pControl->lpVtbl->StartLine(pControl);
+        pControl->lpVtbl->Release(pControl);
+    }
+
+    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanSocket, (PVOID*)&pSocket);
+    pBal->lpVtbl->Release(pBal);
+    if (FAILED(hr) || NULL == pSocket)
+    {
+        set_error_reason("Failed to open CAN socket.");
+        return -1;
+    }
+
+    hr = pSocket->lpVtbl->CreateChannel(pSocket, FALSE, &pChannel);
+    pSocket->lpVtbl->Release(pSocket);
+    if (FAILED(hr) || NULL == pChannel)
+    {
+        set_error_reason("Failed to create CAN channel.");
+        return -1;
+    }
+
+    hr = pChannel->lpVtbl->Initialize(pChannel, 1024, 128);
+    if (FAILED(hr))
+    {
+        pChannel->lpVtbl->Release(pChannel);
+        set_error_reason("Failed to initialize CAN channel.");
+        return -1;
+    }
+
+    hr = pChannel->lpVtbl->Activate(pChannel);
+    if (FAILED(hr))
+    {
+        pChannel->lpVtbl->Release(pChannel);
+        set_error_reason("Failed to activate CAN channel.");
+        return -1;
+    }
+
+    pChannel->lpVtbl->GetReader(pChannel, &ctx->pReader);
+    pChannel->lpVtbl->GetWriter(pChannel, &ctx->pWriter);
+    ctx->pChannel = pChannel;
+    can_interface[index].baudrate = baud;
+
+    return 0;
 
 #else
+    set_error_reason("Ixxat driver is only supported on Windows.");
     (void)index;
     (void)baud;
     return -1;
@@ -301,6 +419,7 @@ int ixxat_send(int index, struct can_frame* frame)
     return 0;
 
 #else
+    set_error_reason("Ixxat driver is only supported on Windows.");
     (void)index;
     (void)frame;
     return -1;
@@ -347,6 +466,7 @@ int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
     return 0;
 
 #else
+    set_error_reason("Ixxat driver is only supported on Windows.");
     (void)index;
     (void)frame;
     (void)timestamp;

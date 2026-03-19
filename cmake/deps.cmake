@@ -38,7 +38,7 @@ if(WIN32)
   set(IXXAT_VCI_LIBRARY     ${IXXAT_VCI_PATH}/sdk/vci/lib/${IXXAT_VCI_PLATFORM}/release/vciapi.lib)
 
   # PCAN-Basic API
-  set(PCAN_VERSION_WINDOWS "5.0.0.1115")
+  set(PCAN_VERSION "5.0.0.1115")
 
   set(PCAN_PLATFORM  "x64")
   set(PCAN_PATH      "${CMAKE_CURRENT_SOURCE_DIR}/deps/PCAN-Basic_API_Windows")
@@ -47,7 +47,7 @@ if(WIN32)
     set(PCAN_PLATFORM "Win32")
   endif()
 
-  set(PCAN_DEVEL_PKG  PCAN-Basic_Windows-${PCAN_VERSION_WINDOWS}.zip)
+  set(PCAN_DEVEL_PKG  PCAN-Basic_Windows-${PCAN_VERSION}.zip)
   set(PCAN_DEVEL_URL  https://canopenterm.de/mirror)
   set(PCAN_DEVEL_HASH aca36ff1a766839ffc698f6d1a1d0870f01e395e)
 
@@ -73,14 +73,54 @@ if(WIN32)
   set(PCAN_INCLUDE_DIR ${PCAN_PATH}/Include)
   set(PCAN_LIBRARY     ${PCAN_PATH}/${PCAN_PLATFORM}/VC_LIB/PCANBasic.lib)
 
+  # Softing CAN Layer 2
+  set(SOFTING_VERSION "5.23.1")
+
+  set(SOFTING_PLATFORM  "Win64")
+  set(SOFTING_POSTFIX   "_64")
+  set(SOFTING_PATH      "${CMAKE_CURRENT_SOURCE_DIR}/deps/Softing")
+
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(SOFTING_PLATFORM "Win32")
+    set(SOFTING_POSTFIX "")
+  endif()
+
+  set(SOFTING_DEVEL_PKG  Softing_CAN_Layer2-v${SOFTING_VERSION}.zip)
+  set(SOFTING_DEVEL_URL  https://canopenterm.de/mirror)
+  set(SOFTING_DEVEL_HASH 17afeee9682673d988dec276b739fe217aa61039)
+
+  ExternalProject_Add(Softing_devel
+    URL ${SOFTING_DEVEL_URL}/${SOFTING_DEVEL_PKG}
+    URL_HASH SHA1=${SOFTING_DEVEL_HASH}
+    DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps
+    DOWNLOAD_NO_PROGRESS true
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+    TLS_VERIFY true
+    SOURCE_DIR ${SOFTING_PATH}/
+    BUILD_BYPRODUCTS "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.lib"
+
+    BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping build step."
+
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
+      "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.dll" ${CMAKE_CURRENT_BINARY_DIR}/
+
+    PATCH_COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_softing.cmake" ${SOFTING_PATH}/CMakeLists.txt
+  )
+
+  set(SOFTING_INCLUDE_DIR "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL")
+  set(SOFTING_LIBRARY     "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.lib")
+
   set(PLATFORM_DEPS
     Ixxat_VCI_devel
     PCAN_devel
+    Softing_devel
   )
 
   set(PLATFORM_LIBS
     ${IXXAT_VCI_LIBRARY}
     ${PCAN_LIBRARY}
+    ${SOFTING_LIBRARY}
   )
 
   include_directories(
@@ -88,10 +128,13 @@ if(WIN32)
     SYSTEM ${PCAN_INCLUDE_DIR}
     SYSTEM ${PCAN_INCLUDE_DIR}/../src/pcan/driver
     SYSTEM ${PCAN_INCLUDE_DIR}/../src/pcan/lib
+    SYSTEM ${SOFTING_INCLUDE_DIR}
   )
 
   add_dependencies(
     ${PROJECT_NAME}
     Ixxat_VCI_devel
-    PCAN_devel)
+    PCAN_devel
+    Softing_devel
+  )
 endif()

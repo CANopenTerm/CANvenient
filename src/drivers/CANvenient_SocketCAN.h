@@ -8,6 +8,8 @@
  *
  **/
 
+#include "CANvenient.h"
+
 int socketcan_find_interfaces(void);
 
 int socketcan_open(int index);

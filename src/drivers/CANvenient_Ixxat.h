@@ -8,6 +8,8 @@
  *
  **/
 
+#include "CANvenient.h"
+
 int ixxat_find_interfaces(void);
 
 int ixxat_open(int index);

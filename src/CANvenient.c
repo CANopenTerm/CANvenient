@@ -15,6 +15,7 @@
 #include "drivers/CANvenient_internal.h"
 #include "drivers/CANvenient_Ixxat.h"
 #include "drivers/CANvenient_SocketCAN.h"
+#include "drivers/CANvenient_Softing.h"
 #include "drivers/CANvenient_PEAK.h"
 
 struct can_iface can_interface[CAN_MAX_INTERFACES] = {0};
@@ -36,7 +37,13 @@ CANVENIENT_API int can_find_interfaces(void)
         return status;
     }
 
-    return socketcan_find_interfaces();
+    status = socketcan_find_interfaces();
+    if (status < 0)
+    {
+        return status;
+    }
+
+    return softing_find_interfaces();
 }
 
 CANVENIENT_API void can_free_interfaces(void)
@@ -62,6 +69,8 @@ CANVENIENT_API int can_open(int index)
             return ixxat_open(index);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_open(index);
+        case CAN_VENDOR_SOFTING:
+            return softing_open(index);
         default:
         case CAN_VENDOR_NONE:
             return -1;
@@ -87,6 +96,9 @@ CANVENIENT_API void can_close(int index)
         }
         case CAN_VENDOR_SOCKETCAN:
             socketcan_close(index);
+            break;
+        case CAN_VENDOR_SOFTING:
+            softing_close(index);
             break;
         default:
         case CAN_VENDOR_NONE:
@@ -182,6 +194,8 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
             return ixxat_send(index, frame);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_send(index, frame);
+        case CAN_VENDOR_SOFTING:
+            return softing_send(index, frame);
         default:
         case CAN_VENDOR_NONE:
             return -1;
@@ -203,6 +217,8 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
             return ixxat_recv(index, frame, timestamp);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_recv(index, frame, timestamp);
+        case CAN_VENDOR_SOFTING:
+            return softing_recv(index, frame, timestamp);
         default:
         case CAN_VENDOR_NONE:
             return -1;
