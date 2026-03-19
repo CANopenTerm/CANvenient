@@ -10,7 +10,7 @@ write code that is portable across different platforms and CAN hardware.
 It is not yet fully functional and may contain bugs and the API is
 not yet stable and may change without deprecation.
 
-## Hardware donation? Yes, please!
+## Hardware donation? Yes, please
 
 Every great abstraction layer is only as good as the hardware it has been tested
 against. If you have CAN interfaces collecting dust on a shelf - be it a

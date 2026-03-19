@@ -78,20 +78,20 @@ int kvaser_find_interfaces(void)
             return -1;
         }
         ch_info->channel = i;
-        ch_info->handle  = canINVALID_HANDLE;
+        ch_info->handle = canINVALID_HANDLE;
 
-        can_interface[i].name = (char*)malloc(strlen(device_name) + 1);
+        can_interface[i].name = (char*)malloc(strnlen(device_name, sizeof(device_name)) + 1);
         if (NULL == can_interface[i].name)
         {
             set_error_reason("Memory allocation failed.");
             free(ch_info);
             return -1;
         }
-        strcpy_s(can_interface[i].name, strlen(device_name) + 1, device_name);
+        strncpy_s(can_interface[i].name, strlen(device_name) + 1, device_name, _TRUNCATE);
 
         can_interface[i].internal = ch_info;
-        can_interface[i].vendor   = CAN_VENDOR_KVASER;
-        can_interface[i].opened   = 0;
+        can_interface[i].vendor = CAN_VENDOR_KVASER;
+        can_interface[i].opened = 0;
         can_interface[i].baudrate = CAN_BAUD_1M;
     }
 
@@ -131,7 +131,7 @@ int kvaser_open(int index)
         return -1;
     }
 
-    ch_info->handle          = hnd;
+    ch_info->handle = hnd;
     can_interface[index].opened = 1;
     return 0;
 
@@ -155,7 +155,7 @@ void kvaser_close(int index)
 
     canBusOff(ch_info->handle);
     canClose(ch_info->handle);
-    ch_info->handle           = canINVALID_HANDLE;
+    ch_info->handle = canINVALID_HANDLE;
     can_interface[index].opened = 0;
 
 #else
@@ -225,9 +225,9 @@ int kvaser_recv(int index, struct can_frame* frame, u64* timestamp)
         return -1;
     }
 
-    frame->can_id  = (canid_t)id;
+    frame->can_id = (canid_t)id;
     frame->can_dlc = (u8)dlc;
-    *timestamp     = (u64)time * 1000ULL; /* ms to µs */
+    *timestamp = (u64)time * 1000ULL; /* ms to µs */
 
     return 0;
 
@@ -245,21 +245,36 @@ static long baudrate_to_canlib(enum can_baudrate baud)
 {
     switch (baud)
     {
-        case CAN_BAUD_1M:   return canBITRATE_1M;
-        case CAN_BAUD_800K: return canBITRATE_1M;   /* no 800K predefined, fall back to 1M */
-        case CAN_BAUD_500K: return canBITRATE_500K;
-        case CAN_BAUD_250K: return canBITRATE_250K;
-        case CAN_BAUD_125K: return canBITRATE_125K;
-        case CAN_BAUD_100K: return canBITRATE_100K;
-        case CAN_BAUD_95K:  return canBITRATE_83K;  /* closest predefined */
-        case CAN_BAUD_83K:  return canBITRATE_83K;
-        case CAN_BAUD_50K:  return canBITRATE_50K;
-        case CAN_BAUD_47K:  return canBITRATE_50K;  /* closest predefined */
-        case CAN_BAUD_33K:  return canBITRATE_62K;  /* closest predefined */
-        case CAN_BAUD_20K:  return canBITRATE_10K;  /* closest predefined */
-        case CAN_BAUD_10K:  return canBITRATE_10K;
-        case CAN_BAUD_5K:   return canBITRATE_10K;  /* closest predefined */
-        default:            return canBITRATE_1M;
+        case CAN_BAUD_1M:
+            return canBITRATE_1M;
+        case CAN_BAUD_800K:
+            return canBITRATE_1M; /* no 800K predefined, fall back to 1M */
+        case CAN_BAUD_500K:
+            return canBITRATE_500K;
+        case CAN_BAUD_250K:
+            return canBITRATE_250K;
+        case CAN_BAUD_125K:
+            return canBITRATE_125K;
+        case CAN_BAUD_100K:
+            return canBITRATE_100K;
+        case CAN_BAUD_95K:
+            return canBITRATE_83K; /* closest predefined */
+        case CAN_BAUD_83K:
+            return canBITRATE_83K;
+        case CAN_BAUD_50K:
+            return canBITRATE_50K;
+        case CAN_BAUD_47K:
+            return canBITRATE_50K; /* closest predefined */
+        case CAN_BAUD_33K:
+            return canBITRATE_62K; /* closest predefined */
+        case CAN_BAUD_20K:
+            return canBITRATE_10K; /* closest predefined */
+        case CAN_BAUD_10K:
+            return canBITRATE_10K;
+        case CAN_BAUD_5K:
+            return canBITRATE_10K; /* closest predefined */
+        default:
+            return canBITRATE_1M;
     }
 }
 
