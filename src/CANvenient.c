@@ -26,7 +26,7 @@ CANVENIENT_API int can_find_interfaces(void)
 {
     int status;
 
-        status = ixxat_find_interfaces();
+    status = ixxat_find_interfaces();
     if (status < 0)
     {
         return status;
