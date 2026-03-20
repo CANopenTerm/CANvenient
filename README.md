@@ -12,7 +12,7 @@ not yet stable and may change without deprecation.
 
 ## Supported Back-Ends
 
-The following back-ends are currently implemented but not fully tested:	
+The following back-ends are currently implemented but not fully tested:
 
 - Ixxat VCI
 - Kvaser CANlib
