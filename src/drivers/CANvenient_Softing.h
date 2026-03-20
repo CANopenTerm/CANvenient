@@ -15,6 +15,7 @@ int softing_find_interfaces(void);
 int softing_open(int index);
 int softing_open_fd(int index);
 void softing_close(int index);
+int softing_update(int index);
 
 int softing_set_baudrate(int index, enum can_baudrate baud);
 

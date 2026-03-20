@@ -65,6 +65,7 @@ CANVENIENT_API int can_open(int index)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
+        set_error_reason("Channel index is out-of-range.");
         return -1;
     }
 
@@ -132,7 +133,53 @@ CANVENIENT_API void can_close(int index)
     }
 }
 
-CANVENIENT_API void can_get_error_reason(char* reason_buf, size_t buf_size)
+CANVENIENT_API int can_update(int index)
+{
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        set_error_reason("Channel index is out-of-range.");
+        return -1;
+    }
+
+    switch (can_interface[index].vendor)
+    {
+        case CAN_VENDOR_IXXAT:
+            return ixxat_update(index);
+        case CAN_VENDOR_KVASER:
+            return kvaser_update(index);
+        case CAN_VENDOR_PEAK:
+            return peak_update(index);
+        case CAN_VENDOR_SOCKETCAN:
+            return socketcan_update(index);
+            break;
+        case CAN_VENDOR_SOFTING:
+            return softing_update(index);
+        default:
+        case CAN_VENDOR_NONE:
+            return -1;
+    }
+}
+
+CANVENIENT_API int can_get_baudrate(int index, enum can_baudrate* baud)
+{
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        set_error_reason("Channel index is out-of-range.");
+        return -1;
+    }
+    else if (!baud)
+    {
+        set_error_reason("Output parameter is NULL.");
+        return -1;
+    }
+    else
+    {
+        *baud = can_interface[index].baudrate;
+        return 0;
+    }
+}
+
+CANVENIENT_API void can_get_error(char* reason_buf, size_t buf_size)
 {
     if (NULL == reason_buf || buf_size == 0)
     {
@@ -145,6 +192,7 @@ CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
+        set_error_reason("Channel index is out-of-range.");
         return -1;
     }
     else if (NULL == can_interface[index].name)
@@ -166,6 +214,7 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
+        set_error_reason("Channel index is out-of-range.");
         return -1;
     }
     else if (baud < CAN_BAUD_1M || baud > CAN_BAUD_5K)
@@ -199,6 +248,7 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
+        set_error_reason("Channel index is out-of-range.");
         return -1;
     }
 
@@ -224,6 +274,7 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
+        set_error_reason("Channel index is out-of-range.");
         return -1;
     }
 

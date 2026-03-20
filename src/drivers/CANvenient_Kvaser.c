@@ -164,6 +164,21 @@ void kvaser_close(int index)
 #endif
 }
 
+int kvaser_update(int index)
+{
+#ifdef _WIN32
+
+    set_error_reason("Kvaser driver is not supported yet.");
+    (void)index;
+    return -1;
+
+#else
+    set_error_reason("Kvaser driver is only supported on Windows.");
+    (void)index;
+    return -1;
+#endif
+}
+
 int kvaser_set_baudrate(int index, enum can_baudrate baud)
 {
 #ifdef _WIN32

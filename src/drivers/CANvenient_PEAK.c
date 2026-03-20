@@ -16,6 +16,7 @@
 #include <windows.h>
 #include <PCANBasic.h>
 
+static char* lookup_bus_name(DWORD device_type);
 static char* lookup_error_string(TPCANStatus pcan_status);
 #endif
 
@@ -29,6 +30,7 @@ int peak_find_interfaces(void)
     u32 ch_count = 0;
     TPCANChannelInformation* pcan_ch_info;
     TPCANStatus pcan_status;
+    char bus_name[16] = {0};
 
     /* PEAK-System. */
     pcan_status = CAN_GetValue(PCAN_NONEBUS, PCAN_ATTACHED_CHANNELS_COUNT, &ch_count, sizeof(u32));
@@ -78,7 +80,8 @@ int peak_find_interfaces(void)
             return -1;
         }
 
-        name_len = strnlen(pcan_ch_info[i].device_name, sizeof(pcan_ch_info[i].device_name));
+        snprintf(bus_name, sizeof(bus_name), "%s", lookup_bus_name(pcan_ch_info[i].channel_handle));
+        name_len = strnlen(bus_name, sizeof(bus_name));
         can_interface[i].name = (char*)malloc(name_len + 1);
         if (NULL == can_interface[i].name)
         {
@@ -92,7 +95,7 @@ int peak_find_interfaces(void)
         }
 
         /* Set interface properties */
-        snprintf(can_interface[i].name, name_len + 1, "%.*s", (int)name_len, pcan_ch_info[i].device_name);
+        snprintf(can_interface[i].name, name_len + 1, "%s", bus_name);
         memcpy(can_interface[i].internal, &pcan_ch_info[i], sizeof(TPCANChannelInformation));
 
         can_interface[i].vendor = CAN_VENDOR_PEAK;
@@ -147,6 +150,35 @@ void peak_close(int index)
 #else
     set_error_reason("PEAK driver is only supported on Windows.");
     (void)index;
+#endif
+}
+
+int peak_update(int index)
+{
+#ifdef _WIN32
+
+    TPCANStatus pcan_status;
+
+    if (NULL == can_interface[index].internal)
+    {
+        return -1;
+    }
+
+    pcan_status = CAN_GetStatus(((TPCANChannelInformation*)can_interface[index].internal)->channel_handle);
+    if (PCAN_ERROR_ILLHW == pcan_status)
+    {
+        return -1;
+    }
+    else
+    {
+        return 0;
+    }
+
+#else
+
+    set_error_reason("PEAK driver is only supported on Windows.");
+    (void)index;
+    return -1;
 #endif
 }
 
@@ -242,6 +274,112 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 }
 
 #ifdef _WIN32
+static char* lookup_bus_name(DWORD device_type)
+{
+    switch (device_type)
+    {
+        default:
+        case PCAN_NONEBUS:
+            return "PCAN-NONEBUS";
+        case PCAN_PCIBUS1:
+            return "PCAN-PCI 1";
+        case PCAN_PCIBUS2:
+            return "PCAN-PCI 2";
+        case PCAN_PCIBUS3:
+            return "PCAN-PCI 3";
+        case PCAN_PCIBUS4:
+            return "PCAN-PCI 4";
+        case PCAN_PCIBUS5:
+            return "PCAN-PCI 5";
+        case PCAN_PCIBUS6:
+            return "PCAN-PCI 6";
+        case PCAN_PCIBUS7:
+            return "PCAN-PCI 7";
+        case PCAN_PCIBUS8:
+            return "PCAN-PCI 8";
+        case PCAN_PCIBUS9:
+            return "PCAN-PCI 9";
+        case PCAN_PCIBUS10:
+            return "PCAN-PCI 10";
+        case PCAN_PCIBUS11:
+            return "PCAN-PCI 11";
+        case PCAN_PCIBUS12:
+            return "PCAN-PCI 12";
+        case PCAN_PCIBUS13:
+            return "PCAN-PCI 13";
+        case PCAN_PCIBUS14:
+            return "PCAN-PCI 14";
+        case PCAN_PCIBUS15:
+            return "PCAN-PCI 15";
+        case PCAN_PCIBUS16:
+            return "PCAN-PCI 16";
+        case PCAN_USBBUS1:
+            return "PCAN-USB 1";
+        case PCAN_USBBUS2:
+            return "PCAN-USB 2";
+        case PCAN_USBBUS3:
+            return "PCAN-USB 3";
+        case PCAN_USBBUS4:
+            return "PCAN-USB 4";
+        case PCAN_USBBUS5:
+            return "PCAN-USB 5";
+        case PCAN_USBBUS6:
+            return "PCAN-USB 6";
+        case PCAN_USBBUS7:
+            return "PCAN-USB 7";
+        case PCAN_USBBUS8:
+            return "PCAN-USB 8";
+        case PCAN_USBBUS9:
+            return "PCAN-USB 9";
+        case PCAN_USBBUS10:
+            return "PCAN-USB 10";
+        case PCAN_USBBUS11:
+            return "PCAN-USB 11";
+        case PCAN_USBBUS12:
+            return "PCAN-USB 12";
+        case PCAN_USBBUS13:
+            return "PCAN-USB 13";
+        case PCAN_USBBUS14:
+            return "PCAN-USB 14";
+        case PCAN_USBBUS15:
+            return "PCAN-USB 15";
+        case PCAN_USBBUS16:
+            return "PCAN-USB 16";
+        case PCAN_LANBUS1:
+            return "PCAN-LAN 1";
+        case PCAN_LANBUS2:
+            return "PCAN-LAN 2";
+        case PCAN_LANBUS3:
+            return "PCAN-LAN 3";
+        case PCAN_LANBUS4:
+            return "PCAN-LAN 4";
+        case PCAN_LANBUS5:
+            return "PCAN-LAN 5";
+        case PCAN_LANBUS6:
+            return "PCAN-LAN 6";
+        case PCAN_LANBUS7:
+            return "PCAN-LAN 7";
+        case PCAN_LANBUS8:
+            return "PCAN-LAN 8";
+        case PCAN_LANBUS9:
+            return "PCAN-LAN 9";
+        case PCAN_LANBUS10:
+            return "PCAN-LAN 10";
+        case PCAN_LANBUS11:
+            return "PCAN-LAN 11";
+        case PCAN_LANBUS12:
+            return "PCAN-LAN 12";
+        case PCAN_LANBUS13:
+            return "PCAN-LAN 13";
+        case PCAN_LANBUS14:
+            return "PCAN-LAN 14";
+        case PCAN_LANBUS15:
+            return "PCAN-LAN 15";
+        case PCAN_LANBUS16:
+            return "PCAN-LAN 16";
+    }
+}
+
 static char* lookup_error_string(TPCANStatus pcan_status)
 {
     static char error_buf[1024];

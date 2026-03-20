@@ -185,6 +185,21 @@ void socketcan_close(int index)
 #endif
 }
 
+int socketcan_update(int index)
+{
+#ifdef __linux__
+
+    set_error_reason("SocketCAN driver is not supported yet.");
+    (void)index;
+    return -1;
+
+#else
+    set_error_reason("SocketCAN driver is only supported on Linux.");
+    (void)index;
+    return -1;
+#endif
+}
+
 int socketcan_set_baudrate(int index, enum can_baudrate baud)
 {
 #ifdef __linux__

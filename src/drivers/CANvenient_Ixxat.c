@@ -262,6 +262,21 @@ void ixxat_close(int index)
 #endif
 }
 
+int ixxat_update(int index)
+{
+#ifdef _WIN32
+
+    set_error_reason("Ixxat driver is not supported yet.");
+    (void)index;
+    return -1;
+
+#else
+    set_error_reason("Ixxat driver is only supported on Windows.");
+    (void)index;
+    return -1;
+#endif
+}
+
 int ixxat_set_baudrate(int index, enum can_baudrate baud)
 {
 #ifdef _WIN32

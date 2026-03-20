@@ -14,6 +14,7 @@ int ixxat_find_interfaces(void);
 
 int ixxat_open(int index);
 void ixxat_close(int index);
+int ixxat_update(int index);
 
 int ixxat_set_baudrate(int index, enum can_baudrate baud);
 

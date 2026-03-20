@@ -15,6 +15,7 @@ int kvaser_find_interfaces(void);
 int kvaser_open(int index);
 int kvaser_open_fd(int index);
 void kvaser_close(int index);
+int kvaser_update(int index);
 
 int kvaser_set_baudrate(int index, enum can_baudrate baud);
 

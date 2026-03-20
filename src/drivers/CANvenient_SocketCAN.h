@@ -14,6 +14,7 @@ int socketcan_find_interfaces(void);
 
 int socketcan_open(int index);
 void socketcan_close(int index);
+int socketcan_update(int index);
 
 int socketcan_set_baudrate(int index, enum can_baudrate baud);
 

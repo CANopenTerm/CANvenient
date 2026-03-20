@@ -15,6 +15,7 @@ int peak_find_interfaces(void);
 int peak_open(int index);
 int peak_open_fd(int index);
 void peak_close(int index);
+int peak_update(int index);
 
 int peak_set_baudrate(int index, enum can_baudrate baud);
 

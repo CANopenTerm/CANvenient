@@ -15,6 +15,7 @@ int template_find_interfaces(void);
 int template_open(int index);
 int template_open_fd(int index);
 void template_close(int index);
+int template_update(int index);
 
 int template_set_baudrate(int index, enum can_baudrate baud);
 

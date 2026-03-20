@@ -29,7 +29,7 @@ int main()
                 else
                 {
                     char error_reason[256] = {0};
-                    can_get_error_reason(error_reason, sizeof(error_reason));
+                    can_get_error(error_reason, sizeof(error_reason));
                     printf("Failed to open CAN interface %s: %s\n", name, error_reason);
                 }
             }
