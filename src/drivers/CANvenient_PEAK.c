@@ -167,6 +167,7 @@ int peak_update(int index)
     pcan_status = CAN_GetStatus(((TPCANChannelInformation*)can_interface[index].internal)->channel_handle);
     if (PCAN_ERROR_ILLHW == pcan_status)
     {
+        can_release(index);
         return -1;
     }
     else
@@ -188,7 +189,7 @@ int peak_set_baudrate(int index, enum can_baudrate baud)
 
     can_close(index);
     can_interface[index].baudrate = baud;
-    return can_open(index);
+    return can_open(index, baud);
 
 #else
     set_error_reason("PEAK driver is only supported on Windows.");

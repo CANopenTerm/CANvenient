@@ -189,9 +189,30 @@ int socketcan_update(int index)
 {
 #ifdef __linux__
 
-    set_error_reason("SocketCAN driver is not supported yet.");
-    (void)index;
-    return -1;
+    struct ifreq ifr;
+    int tmp_sock;
+
+    if (NULL == can_interface[index].name)
+    {
+        return -1;
+    }
+
+    tmp_sock = socket(AF_CAN, SOCK_RAW, CAN_RAW);
+    if (tmp_sock < 0)
+    {
+        return -1;
+    }
+
+    strcpy(ifr.ifr_name, can_interface[index].name);
+    if (ioctl(tmp_sock, SIOCGIFINDEX, &ifr) < 0)
+    {
+        close(tmp_sock);
+        can_release(index);
+        return -1;
+    }
+
+    close(tmp_sock);
+    return 0;
 
 #else
     set_error_reason("SocketCAN driver is only supported on Linux.");

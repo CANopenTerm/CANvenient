@@ -95,10 +95,11 @@ struct can_frame
 #endif /* _CAN_H */
 
 CANVENIENT_API int can_find_interfaces(void);
-CANVENIENT_API void can_free_interfaces(void);
+CANVENIENT_API void can_release_interfaces(void);
 
-CANVENIENT_API int can_open(int index);
+CANVENIENT_API int can_open(int index, enum can_baudrate baud);
 CANVENIENT_API void can_close(int index);
+CANVENIENT_API void can_release(int index);
 CANVENIENT_API int can_update(int index);
 
 CANVENIENT_API void can_get_error(char* reason_buf, size_t buf_size);

@@ -53,21 +53,23 @@ CANVENIENT_API int can_find_interfaces(void)
     return softing_find_interfaces();
 }
 
-CANVENIENT_API void can_free_interfaces(void)
+CANVENIENT_API void can_release_interfaces(void)
 {
     for (int i = 0; i < CAN_MAX_INTERFACES; i++)
     {
-        can_close(i);
+        can_release(i);
     }
 }
 
-CANVENIENT_API int can_open(int index)
+CANVENIENT_API int can_open(int index, enum can_baudrate baud)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {
         set_error_reason("Channel index is out-of-range.");
         return -1;
     }
+
+    can_interface[index].baudrate = baud;
 
     switch (can_interface[index].vendor)
     {
@@ -83,6 +85,7 @@ CANVENIENT_API int can_open(int index)
             return softing_open(index);
         default:
         case CAN_VENDOR_NONE:
+            set_error_reason("No CAN interface found at specified index.");
             return -1;
     }
 }
@@ -117,6 +120,16 @@ CANVENIENT_API void can_close(int index)
         case CAN_VENDOR_NONE:
             break;
     }
+}
+
+CANVENIENT_API void can_release(int index)
+{
+    if (index < 0 || index >= CAN_MAX_INTERFACES)
+    {
+        return;
+    }
+
+    can_close(index);
 
     can_interface[index].vendor = CAN_VENDOR_NONE;
     can_interface[index].opened = 0;
@@ -156,6 +169,7 @@ CANVENIENT_API int can_update(int index)
             return softing_update(index);
         default:
         case CAN_VENDOR_NONE:
+            set_error_reason("No CAN interface found at specified index.");
             return -1;
     }
 }
@@ -197,10 +211,12 @@ CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size)
     }
     else if (NULL == can_interface[index].name)
     {
+        set_error_reason("CAN interface name is not set.");
         return -1;
     }
     else if (NULL == name_buf)
     {
+        set_error_reason("Output parameter is NULL.");
         return -1;
     }
     else
@@ -219,10 +235,12 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
     }
     else if (baud < CAN_BAUD_1M || baud > CAN_BAUD_5K)
     {
+        set_error_reason("Invalid baudrate specified.");
         return -1;
     }
     else if (! can_interface[index].name)
     {
+        set_error_reason("CAN interface name is not set.");
         return -1;
     }
 
@@ -240,6 +258,7 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
             return softing_set_baudrate(index, baud);
         default:
         case CAN_VENDOR_NONE:
+            set_error_reason("No CAN interface found at specified index.");
             return -1;
     }
 }
@@ -266,6 +285,7 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
             return softing_send(index, frame);
         default:
         case CAN_VENDOR_NONE:
+            set_error_reason("No CAN interface found at specified index.");
             return -1;
     }
 }
@@ -292,6 +312,7 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
             return softing_recv(index, frame, timestamp);
         default:
         case CAN_VENDOR_NONE:
+            set_error_reason("No CAN interface found at specified index.");
             return -1;
     }
 }

@@ -168,9 +168,24 @@ int kvaser_update(int index)
 {
 #ifdef _WIN32
 
-    set_error_reason("Kvaser driver is not supported yet.");
-    (void)index;
-    return -1;
+    kvaser_channel_info_t* ch_info;
+    canStatus status;
+    char device_name[256];
+
+    ch_info = (kvaser_channel_info_t*)can_interface[index].internal;
+    if (NULL == ch_info)
+    {
+        return -1;
+    }
+
+    status = canGetChannelData(ch_info->channel, canCHANNELDATA_DEVDESCR_ASCII, device_name, sizeof(device_name));
+    if (status < 0)
+    {
+        can_release(index);
+        return -1;
+    }
+
+    return 0;
 
 #else
     set_error_reason("Kvaser driver is only supported on Windows.");
@@ -185,7 +200,7 @@ int kvaser_set_baudrate(int index, enum can_baudrate baud)
 
     can_close(index);
     can_interface[index].baudrate = baud;
-    return can_open(index);
+    return can_open(index, baud);
 
 #else
     set_error_reason("Kvaser driver is only supported on Windows.");

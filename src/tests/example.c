@@ -22,7 +22,7 @@ int main()
             can_get_name(i, name, sizeof(name));
             if (name[0] != '\0')
             {
-                if (0 == can_open(i))
+                if (0 == can_open(i, CAN_BAUD_1M))
                 {
                     printf("Opened CAN interface: %s\n", name);
                 }
@@ -37,6 +37,6 @@ int main()
     }
 
     /* Implicitly calls can_close() for all opened interfaces. */
-    can_free_interfaces();
+    can_release_interfaces();
     return EXIT_SUCCESS;
 }

@@ -266,9 +266,34 @@ int ixxat_update(int index)
 {
 #ifdef _WIN32
 
-    set_error_reason("Ixxat driver is not supported yet.");
-    (void)index;
-    return -1;
+    ixxat_ctx_t* ctx;
+    IVciDeviceManager* pDevMan = NULL;
+    IVciDevice* pDevice = NULL;
+    HRESULT hr;
+
+    ctx = (ixxat_ctx_t*)can_interface[index].internal;
+    if (NULL == ctx)
+    {
+        return -1;
+    }
+
+    hr = VciGetDeviceManager(&pDevMan);
+    if (FAILED(hr) || NULL == pDevMan)
+    {
+        can_release(index);
+        return -1;
+    }
+
+    hr = pDevMan->lpVtbl->OpenDevice(pDevMan, &ctx->device_id, &pDevice);
+    pDevMan->lpVtbl->Release(pDevMan);
+    if (FAILED(hr) || NULL == pDevice)
+    {
+        can_release(index);
+        return -1;
+    }
+
+    pDevice->lpVtbl->Release(pDevice);
+    return 0;
 
 #else
     set_error_reason("Ixxat driver is only supported on Windows.");

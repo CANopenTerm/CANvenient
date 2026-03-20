@@ -199,9 +199,57 @@ int softing_update(int index)
 {
 #ifdef _WIN32
 
-    set_error_reason("Softing driver is not supported yet.");
-    (void)index;
-    return -1;
+    softing_ctx_t* ctx;
+    unsigned long buf_size_needed = 0;
+    unsigned long num_channels = 0;
+    CHDSNAPSHOT* channels = NULL;
+    unsigned long i;
+    int found = 0;
+
+    ctx = (softing_ctx_t*)can_interface[index].internal;
+    if (NULL == ctx)
+    {
+        return -1;
+    }
+
+    CANL2_get_all_CAN_channels(0, &buf_size_needed, &num_channels, NULL);
+    if (0 == num_channels || 0 == buf_size_needed)
+    {
+        can_release(index);
+        return -1;
+    }
+
+    channels = (CHDSNAPSHOT*)malloc(buf_size_needed);
+    if (NULL == channels)
+    {
+        return -1;
+    }
+
+    if (CANL2_OK != CANL2_get_all_CAN_channels(buf_size_needed, &buf_size_needed, &num_channels, channels))
+    {
+        free(channels);
+        can_release(index);
+        return -1;
+    }
+
+    for (i = 0; i < num_channels; i++)
+    {
+        if (0 == strncmp(ctx->channel_name, channels[i].ChannelName, MAXLENCHNAME))
+        {
+            found = 1;
+            break;
+        }
+    }
+
+    free(channels);
+
+    if (!found)
+    {
+        can_release(index);
+        return -1;
+    }
+
+    return 0;
 
 #else
     set_error_reason("Softing driver is only supported on Windows.");
