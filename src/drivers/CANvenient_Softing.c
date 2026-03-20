@@ -199,14 +199,14 @@ int softing_update(int index)
 {
 #ifdef _WIN32
 
-    softing_ctx_t* ctx;
+    const softing_ctx_t* ctx;
     unsigned long buf_size_needed = 0;
     unsigned long num_channels = 0;
     CHDSNAPSHOT* channels = NULL;
     unsigned long i;
     int found = 0;
 
-    ctx = (softing_ctx_t*)can_interface[index].internal;
+    ctx = (const softing_ctx_t*)can_interface[index].internal;
     if (NULL == ctx)
     {
         return -1;
