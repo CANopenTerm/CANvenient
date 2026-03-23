@@ -75,6 +75,23 @@ int ixxat_find_interfaces(void)
                                     char socket_name[256];
                                     size_t name_len;
                                     u32 free_index;
+                                    u32 k;
+                                    int already_registered = 0;
+
+                                    snprintf(socket_name, sizeof(socket_name), "%s CAN%u", devInfo.Description, bus);
+
+                                    for (k = 0; k < CAN_MAX_INTERFACES; k++)
+                                    {
+                                        if (can_interface[k].name && strcmp(can_interface[k].name, socket_name) == 0)
+                                        {
+                                            already_registered = 1;
+                                            break;
+                                        }
+                                    }
+                                    if (already_registered)
+                                    {
+                                        continue;
+                                    }
 
                                     if (0 != find_free_interface_slot(&free_index))
                                     {
@@ -82,7 +99,6 @@ int ixxat_find_interfaces(void)
                                         continue;
                                     }
 
-                                    snprintf(socket_name, sizeof(socket_name), "%s CAN%u", devInfo.Description, bus);
                                     name_len = strnlen(socket_name, sizeof(socket_name));
 
                                     can_interface[free_index].name = (char*)malloc(name_len + 1);

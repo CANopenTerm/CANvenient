@@ -56,12 +56,9 @@ int kvaser_find_interfaces(void)
     {
         char device_name[256];
         kvaser_channel_info_t* ch_info;
-
-        if (can_interface[i].name)
-        {
-            /* Slot already occupied: skip. */
-            continue;
-        }
+        u32 free_index;
+        u32 k;
+        int already_registered = 0;
 
         status = canGetChannelData(i, canCHANNELDATA_DEVDESCR_ASCII, device_name, sizeof(device_name));
         if (status < 0)
@@ -70,6 +67,25 @@ int kvaser_find_interfaces(void)
             return -1;
         }
         device_name[sizeof(device_name) - 1] = '\0';
+
+        for (k = 0; k < CAN_MAX_INTERFACES; k++)
+        {
+            if (can_interface[k].name && strcmp(can_interface[k].name, device_name) == 0)
+            {
+                already_registered = 1;
+                break;
+            }
+        }
+        if (already_registered)
+        {
+            continue;
+        }
+
+        if (0 != find_free_interface_slot(&free_index))
+        {
+            /* No free slot available: stop. */
+            break;
+        }
 
         ch_info = (kvaser_channel_info_t*)malloc(sizeof(kvaser_channel_info_t));
         if (NULL == ch_info)
@@ -80,19 +96,19 @@ int kvaser_find_interfaces(void)
         ch_info->channel = i;
         ch_info->handle = canINVALID_HANDLE;
 
-        can_interface[i].name = (char*)malloc(strnlen(device_name, sizeof(device_name)) + 1);
-        if (NULL == can_interface[i].name)
+        can_interface[free_index].name = (char*)malloc(strnlen(device_name, sizeof(device_name)) + 1);
+        if (NULL == can_interface[free_index].name)
         {
             set_error_reason("Memory allocation failed.");
             free(ch_info);
             return -1;
         }
-        strncpy_s(can_interface[i].name, strnlen(device_name, sizeof(device_name)) + 1, device_name, _TRUNCATE);
+        strncpy_s(can_interface[free_index].name, strnlen(device_name, sizeof(device_name)) + 1, device_name, _TRUNCATE);
 
-        can_interface[i].internal = ch_info;
-        can_interface[i].vendor = CAN_VENDOR_KVASER;
-        can_interface[i].opened = 0;
-        can_interface[i].baudrate = CAN_BAUD_1M;
+        can_interface[free_index].internal = ch_info;
+        can_interface[free_index].vendor = CAN_VENDOR_KVASER;
+        can_interface[free_index].opened = 0;
+        can_interface[free_index].baudrate = CAN_BAUD_1M;
     }
 
 #endif

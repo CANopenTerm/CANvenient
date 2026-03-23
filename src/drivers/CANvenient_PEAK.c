@@ -64,43 +64,57 @@ int peak_find_interfaces(void)
     for (u32 i = 0; i < ch_count; i++)
     {
         size_t name_len;
+        u32 free_index;
+        u32 k;
+        int already_registered = 0;
 
-        if (can_interface[i].name)
+        snprintf(bus_name, sizeof(bus_name), "%s", lookup_bus_name(pcan_ch_info[i].channel_handle));
+
+        for (k = 0; k < CAN_MAX_INTERFACES; k++)
         {
-            /* Slot already occupied: skip. */
-            i++;
+            if (can_interface[k].name && strcmp(can_interface[k].name, bus_name) == 0)
+            {
+                already_registered = 1;
+                break;
+            }
+        }
+        if (already_registered)
+        {
             continue;
         }
 
-        can_interface[i].internal = malloc(sizeof(TPCANChannelInformation));
-        if (! can_interface[i].internal)
+        if (0 != find_free_interface_slot(&free_index))
+        {
+            /* No free slot available: stop. */
+            break;
+        }
+
+        can_interface[free_index].internal = malloc(sizeof(TPCANChannelInformation));
+        if (! can_interface[free_index].internal)
         {
             set_error_reason("Memory allocation failed.");
             free(pcan_ch_info);
             return -1;
         }
 
-        snprintf(bus_name, sizeof(bus_name), "%s", lookup_bus_name(pcan_ch_info[i].channel_handle));
         name_len = strnlen(bus_name, sizeof(bus_name));
-        can_interface[i].name = (char*)malloc(name_len + 1);
-        if (NULL == can_interface[i].name)
+        can_interface[free_index].name = (char*)malloc(name_len + 1);
+        if (NULL == can_interface[free_index].name)
         {
             set_error_reason("Memory allocation failed.");
-            for (u32 j = 0; j < i; j++)
-            {
-                free(can_interface[j].name);
-            }
+            free(can_interface[free_index].internal);
+            can_interface[free_index].internal = NULL;
             free(pcan_ch_info);
             return -1;
         }
 
         /* Set interface properties */
-        snprintf(can_interface[i].name, name_len + 1, "%s", bus_name);
-        memcpy(can_interface[i].internal, &pcan_ch_info[i], sizeof(TPCANChannelInformation));
+        snprintf(can_interface[free_index].name, name_len + 1, "%s", bus_name);
+        memcpy(can_interface[free_index].internal, &pcan_ch_info[i], sizeof(TPCANChannelInformation));
 
-        can_interface[i].vendor = CAN_VENDOR_PEAK;
-        can_interface[i].opened = 0;
-        can_interface[i].baudrate = CAN_BAUD_1M;
+        can_interface[free_index].vendor = CAN_VENDOR_PEAK;
+        can_interface[free_index].opened = 0;
+        can_interface[free_index].baudrate = CAN_BAUD_1M;
     }
     free(pcan_ch_info);
 

@@ -68,6 +68,21 @@ int softing_find_interfaces(void)
         softing_ctx_t* ctx;
         size_t name_len;
         u32 free_index;
+        u32 k;
+        int already_registered = 0;
+
+        for (k = 0; k < CAN_MAX_INTERFACES; k++)
+        {
+            if (can_interface[k].name && strcmp(can_interface[k].name, channels[i].ChannelName) == 0)
+            {
+                already_registered = 1;
+                break;
+            }
+        }
+        if (already_registered)
+        {
+            continue;
+        }
 
         if (0 != find_free_interface_slot(&free_index))
         {
