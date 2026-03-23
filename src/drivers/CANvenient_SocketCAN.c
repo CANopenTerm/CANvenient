@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+void socketcan_close(int index);
+
 #ifdef __linux__
 #include <dirent.h>
 #include <fcntl.h>
@@ -79,6 +81,24 @@ int socketcan_find_interfaces(void)
             continue;
         }
 
+        /* Skip if this interface is already registered */
+        {
+            u32 k;
+            int already_registered = 0;
+            for (k = 0; k < CAN_MAX_INTERFACES; k++)
+            {
+                if (can_interface[k].name && strcmp(can_interface[k].name, entry->d_name) == 0)
+                {
+                    already_registered = 1;
+                    break;
+                }
+            }
+            if (already_registered)
+            {
+                continue;
+            }
+        }
+
         /* Find a free slot in the interface array */
         if (0 != find_free_interface_slot(&free_index))
         {
@@ -101,7 +121,16 @@ int socketcan_find_interfaces(void)
         can_interface[free_index].vendor = CAN_VENDOR_SOCKETCAN;
         can_interface[free_index].opened = 0;
         can_interface[free_index].baudrate = CAN_BAUD_1M;
-        can_interface[free_index].internal = malloc(sizeof(int)); /* CAN socket. */
+        {
+            int* sock_fd = (int*)malloc(sizeof(int));
+            if (NULL == sock_fd)
+            {
+                closedir(dir);
+                return -1;
+            }
+            *sock_fd = -1;
+            can_interface[free_index].internal = sock_fd; /* CAN socket. */
+        }
     }
 
     closedir(dir);
@@ -122,6 +151,11 @@ int socketcan_open(int index)
         int buffer_size = 1024 * 1024; /* 1MB */
         int enable_timestamp = 1;
         int* can_socket = can_interface[index].internal;
+
+        if (can_interface[index].opened)
+        {
+            socketcan_close(index);
+        }
 
         *can_socket = socket(PF_CAN, SOCK_RAW, CAN_RAW);
         if (*can_socket < 0)
@@ -174,10 +208,12 @@ void socketcan_close(int index)
 {
 #ifdef __linux__
 
-    if (can_interface[index].name)
+    if (can_interface[index].name && can_interface[index].opened)
     {
         int* can_socket = can_interface[index].internal;
         close(*can_socket);
+        *can_socket = -1;
+        can_interface[index].opened = 0;
     }
 
 #else
