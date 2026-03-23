@@ -125,7 +125,7 @@ if(WIN32)
 
   set(SOFTING_DEVEL_PKG  Softing_CAN_Layer2-${SOFTING_VERSION}.zip)
   set(SOFTING_DEVEL_URL  https://canopenterm.de/mirror)
-  set(SOFTING_DEVEL_HASH 17afeee9682673d988dec276b739fe217aa61039)
+  set(SOFTING_DEVEL_HASH a690c72c326140ae888ad65695fcdd330e86ce0f)
 
   ExternalProject_Add(Softing_devel
     URL ${SOFTING_DEVEL_URL}/${SOFTING_DEVEL_PKG}
@@ -140,7 +140,9 @@ if(WIN32)
     BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping build step."
 
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
-      "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.dll" ${CMAKE_CURRENT_BINARY_DIR}/
+      "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.dll"
+      "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/Win64/canchd_64.dll"
+      ${CMAKE_CURRENT_BINARY_DIR}/
 
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_softing.cmake" ${SOFTING_PATH}/CMakeLists.txt
