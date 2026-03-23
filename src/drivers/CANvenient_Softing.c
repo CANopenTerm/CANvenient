@@ -146,21 +146,27 @@ int softing_open(int index)
         return -1;
     }
 
-    memset(&cfg, 0, sizeof(cfg));
-    cfg.fBaudrate = softing_baudrate_to_kbps(can_interface[index].baudrate);
-    cfg.s32AccCodeStd = 0x00000000;
-    cfg.s32AccMaskStd = 0xFFFFFFFF;
-    cfg.s32AccCodeXtd = 0x00000000;
-    cfg.s32AccMaskXtd = 0xFFFFFFFF;
-    cfg.s32OutputCtrl = 0x1A;
-    cfg.bEnableAck = FALSE;
-    cfg.bEnableErrorframe = FALSE;
-    cfg.hEvent = NULL;
+    cfg.fBaudrate        = softing_baudrate_to_kbps(can_interface[index].baudrate);
+    cfg.s32Prescaler     = GET_FROM_SCIM;
+    cfg.s32Tseg1         = GET_FROM_SCIM;
+    cfg.s32Tseg2         = GET_FROM_SCIM;
+    cfg.s32Sjw           = GET_FROM_SCIM;
+    cfg.s32Sam           = GET_FROM_SCIM;
+    cfg.s32AccCodeStd    = GET_FROM_SCIM;
+    cfg.s32AccMaskStd    = GET_FROM_SCIM;
+    cfg.s32AccCodeXtd    = GET_FROM_SCIM;
+    cfg.s32AccMaskXtd    = GET_FROM_SCIM;
+    cfg.s32OutputCtrl    = GET_FROM_SCIM;
+    cfg.bEnableAck       = GET_FROM_SCIM;
+    cfg.bEnableErrorframe = GET_FROM_SCIM;
+    cfg.hEvent           = NULL;
 
     ret = CANL2_initialize_fifo_mode(ctx->hChannel, &cfg);
     if (CANL2_OK != ret)
     {
-        set_error_reason("Failed to configure Softing CAN channel.");
+        char err_msg[128];
+        snprintf(err_msg, sizeof(err_msg), "Failed to configure Softing CAN channel (code: %d).", ret);
+        set_error_reason(err_msg);
         INIL2_close_channel(ctx->hChannel);
         ctx->hChannel = 0;
         return -1;
