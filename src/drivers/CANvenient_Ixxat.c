@@ -358,6 +358,34 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
         ctx->pChannel = NULL;
     }
 
+    /* Stop the CAN line before changing baudrate. */
+    hr = VciGetDeviceManager(&pDevMan);
+    if (SUCCEEDED(hr) && NULL != pDevMan)
+    {
+        hr = pDevMan->lpVtbl->OpenDevice(pDevMan, &ctx->device_id, &pDevice);
+        if (SUCCEEDED(hr) && NULL != pDevice)
+        {
+            hr = pDevice->lpVtbl->OpenComponent(pDevice, &CLSID_VCIBAL, &IID_IBalObject, (PVOID*)&pBal);
+            if (SUCCEEDED(hr) && NULL != pBal)
+            {
+                hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanControl, (PVOID*)&pControl);
+                if (SUCCEEDED(hr) && NULL != pControl)
+                {
+                    pControl->lpVtbl->StopLine(pControl);
+                    pControl->lpVtbl->ResetLine(pControl);
+                    pControl->lpVtbl->Release(pControl);
+                    pControl = NULL;
+                }
+                pBal->lpVtbl->Release(pBal);
+                pBal = NULL;
+            }
+            pDevice->lpVtbl->Release(pDevice);
+            pDevice = NULL;
+        }
+        pDevMan->lpVtbl->Release(pDevMan);
+        pDevMan = NULL;
+    }
+
     hr = VciGetDeviceManager(&pDevMan);
     if (FAILED(hr) || NULL == pDevMan)
     {
