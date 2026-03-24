@@ -140,26 +140,46 @@ int softing_open(int index)
     }
 
     ret = INIL2_initialize_channel(&ctx->hChannel, ctx->channel_name);
-    if (CANL2_OK != ret)
+    if (ret)
     {
-        set_error_reason("Failed to initialize Softing CAN channel.");
+        switch (ret)
+        {
+            case -1000:
+                set_error_reason("Invalid channel handle.");
+                break;
+            case -1002:
+                set_error_reason("Too many channels opened.");
+                break;
+            case -1003:
+                set_error_reason("Version conflict: incompatible driver or DLL.");
+                break;
+            case -1004:
+                set_error_reason("Firmware download error (may be a DPRAM access error).");
+                break;
+            case -1005:
+                set_error_reason("CAN USB DLL (canusbm.dll) not found or could not be loaded.");
+                break;
+            default:
+                set_error_reason("Unknown error while initializing Softing CAN channel.");
+                break;
+        }
         return -1;
     }
 
-    cfg.fBaudrate        = softing_baudrate_to_kbps(can_interface[index].baudrate);
-    cfg.s32Prescaler     = GET_FROM_SCIM;
-    cfg.s32Tseg1         = GET_FROM_SCIM;
-    cfg.s32Tseg2         = GET_FROM_SCIM;
-    cfg.s32Sjw           = GET_FROM_SCIM;
-    cfg.s32Sam           = GET_FROM_SCIM;
-    cfg.s32AccCodeStd    = GET_FROM_SCIM;
-    cfg.s32AccMaskStd    = GET_FROM_SCIM;
-    cfg.s32AccCodeXtd    = GET_FROM_SCIM;
-    cfg.s32AccMaskXtd    = GET_FROM_SCIM;
-    cfg.s32OutputCtrl    = GET_FROM_SCIM;
-    cfg.bEnableAck       = GET_FROM_SCIM;
+    cfg.fBaudrate = softing_baudrate_to_kbps(can_interface[index].baudrate);
+    cfg.s32Prescaler = GET_FROM_SCIM;
+    cfg.s32Tseg1 = GET_FROM_SCIM;
+    cfg.s32Tseg2 = GET_FROM_SCIM;
+    cfg.s32Sjw = GET_FROM_SCIM;
+    cfg.s32Sam = GET_FROM_SCIM;
+    cfg.s32AccCodeStd = GET_FROM_SCIM;
+    cfg.s32AccMaskStd = GET_FROM_SCIM;
+    cfg.s32AccCodeXtd = GET_FROM_SCIM;
+    cfg.s32AccMaskXtd = GET_FROM_SCIM;
+    cfg.s32OutputCtrl = GET_FROM_SCIM;
+    cfg.bEnableAck = GET_FROM_SCIM;
     cfg.bEnableErrorframe = GET_FROM_SCIM;
-    cfg.hEvent           = NULL;
+    cfg.hEvent = NULL;
 
     ret = CANL2_initialize_fifo_mode(ctx->hChannel, &cfg);
     if (CANL2_OK != ret)
@@ -264,7 +284,7 @@ int softing_update(int index)
 
     free(channels);
 
-    if (!found)
+    if (! found)
     {
         can_release(index);
         return -1;
