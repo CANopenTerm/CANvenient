@@ -82,7 +82,7 @@ if(WIN32)
   set(PCAN_PATH      "${CMAKE_CURRENT_SOURCE_DIR}/deps/PCAN-Basic_API_Windows")
 
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-    set(PCAN_PLATFORM "Win32")
+    set(PCAN_PLATFORM "x86")
   endif()
 
   set(PCAN_DEVEL_PKG  PCAN-Basic_Windows-${PCAN_VERSION}.zip)
