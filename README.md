@@ -10,7 +10,7 @@ write code that is portable across different platforms and CAN hardware.
 ## API Reference
 
 The API reference is available at
-[https://canopenterm.de/canvenient](https://canopenterm.de/canvenient).
+[https://canopenterm.de/canvenient](https://canopenterm.de/canvenient)
 
 ## Supported Back-Ends
 
