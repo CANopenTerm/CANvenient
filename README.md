@@ -7,12 +7,9 @@ CANvenient is an abstraction layer for multiple CAN APIs on Windows and Linux.
 It provides a unified interface for CAN communication, allowing developers to
 write code that is portable across different platforms and CAN hardware.
 
-It is not yet fully functional and may contain bugs and the API is
-not yet stable and may change without deprecation.
-
 ## Supported Back-Ends
 
-The following back-ends are currently implemented but not fully tested:
+The following back-ends are currently implemented:
 
 - Ixxat VCI
 - Kvaser CANlib
