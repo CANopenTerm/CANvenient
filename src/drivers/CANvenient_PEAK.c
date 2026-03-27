@@ -18,6 +18,7 @@
 
 static char* lookup_bus_name(DWORD device_type);
 static char* lookup_error_string(TPCANStatus pcan_status);
+static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud);
 #endif
 
 #include "CANvenient.h"
@@ -130,7 +131,7 @@ int peak_open(int index)
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
 
-    pcan_status = CAN_Initialize(pcan_ch, can_interface[index].baudrate, 0, 0, 0);
+    pcan_status = CAN_Initialize(pcan_ch, lookup_pcan_baudrate(can_interface[index].baudrate), 0, 0, 0);
     if (PCAN_ERROR_OK != pcan_status)
     {
         set_error_reason(lookup_error_string(pcan_status));
@@ -289,6 +290,42 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 }
 
 #ifdef _WIN32
+static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud)
+{
+    switch (baud)
+    {
+        default:
+        case CAN_BAUD_1M:
+            return PCAN_BAUD_1M;
+        case CAN_BAUD_800K:
+            return PCAN_BAUD_800K;
+        case CAN_BAUD_500K:
+            return PCAN_BAUD_500K;
+        case CAN_BAUD_250K:
+            return PCAN_BAUD_250K;
+        case CAN_BAUD_125K:
+            return PCAN_BAUD_125K;
+        case CAN_BAUD_100K:
+            return PCAN_BAUD_100K;
+        case CAN_BAUD_95K:
+            return PCAN_BAUD_95K;
+        case CAN_BAUD_83K:
+            return PCAN_BAUD_83K;
+        case CAN_BAUD_50K:
+            return PCAN_BAUD_50K;
+        case CAN_BAUD_47K:
+            return PCAN_BAUD_47K;
+        case CAN_BAUD_33K:
+            return PCAN_BAUD_33K;
+        case CAN_BAUD_20K:
+            return PCAN_BAUD_20K;
+        case CAN_BAUD_10K:
+            return PCAN_BAUD_10K;
+        case CAN_BAUD_5K:
+            return PCAN_BAUD_5K;
+    }
+}
+
 static char* lookup_bus_name(DWORD device_type)
 {
     switch (device_type)
