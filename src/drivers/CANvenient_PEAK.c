@@ -224,8 +224,6 @@ int peak_send(int index, struct can_frame* frame)
 
     pcan_frame.ID = frame->can_id;
     pcan_frame.LEN = frame->can_dlc;
-
-    /* pcan_frame.MSGTYPE = PCAN_MESSAGE_EXTENDED; */
     pcan_frame.MSGTYPE = PCAN_MESSAGE_STANDARD;
 
     for (int i = 0; i < 8; i += 1)
