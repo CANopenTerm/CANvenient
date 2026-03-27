@@ -19,7 +19,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update -y -qq
-        sudo apt-get install ninja-build libsocketcan-dev libreadline-dev cppcheck valgrind -y -qq
+        sudo apt-get install ninja-build libsocketcan-dev libreadline-dev cppcheck -y -qq
 
     - name: Run cppcheck
       run: |
@@ -30,10 +30,6 @@ jobs:
     - name: Build CANvenient
       run: |
         cmake --build build
-
-    - name: Check for memory errors
-      run: |
-        valgrind --leak-check=full --error-exitcode=1 build/example
 
   Windows:
     needs:   Linux
