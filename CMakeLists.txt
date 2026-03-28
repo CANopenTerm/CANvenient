@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(CANvenient C)
 
+set(PROJECT_VERSION "1.0.0")
+set(PROJECT_VERSION_MAJOR "1")
+
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -29,6 +32,10 @@ if(UNIX)
     ${PROJECT_NAME}
     socketcan
   )
+
+  set_target_properties(
+    ${PROJECT_NAME}
+    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
 endif()
 
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
