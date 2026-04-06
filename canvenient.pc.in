@@ -1,0 +1,11 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: CANvenient
+Description: CAN library with multiple driver backends
+Version: @PROJECT_VERSION@
+Libs: -L${libdir} -lCANvenient
+Libs.private: -lsocketcan
+Cflags: -I${includedir}

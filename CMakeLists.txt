@@ -61,3 +61,23 @@ endif()
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+
+include(GNUInstallDirs)
+
+install(TARGETS ${PROJECT_NAME}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(FILES include/CANvenient.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/canvenient.pc.in
+  ${CMAKE_CURRENT_BINARY_DIR}/canvenient.pc
+  @ONLY
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/canvenient.pc
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
