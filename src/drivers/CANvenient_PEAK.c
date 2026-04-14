@@ -12,7 +12,14 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef _WIN32
+#include "CANvenient.h"
+#include "CANvenient_internal.h"
+
+#ifdef VENIENT_PEAK_DRV_DISABLED
+  #pragma message("!!!!!! WARNING: PEAK driver is disabled. !!!!!!")
+#endif
+
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 #include <windows.h>
 #include <PCANBasic.h>
 
@@ -21,12 +28,9 @@ static char* lookup_error_string(TPCANStatus pcan_status);
 static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud);
 #endif
 
-#include "CANvenient.h"
-#include "CANvenient_internal.h"
-
 int peak_find_interfaces(void)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     u32 ch_count = 0;
     TPCANChannelInformation* pcan_ch_info;
@@ -126,7 +130,7 @@ int peak_find_interfaces(void)
 
 int peak_open(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
@@ -144,7 +148,11 @@ int peak_open(int index)
     }
 
 #else
+  #ifdef VENIENT_PEAK_DRV_DISABLED
+    set_error_reason("PEAK driver is disabled.");
+  #else
     set_error_reason("PEAK driver is only supported on Windows.");
+  #endif
     (void)index;
     return -1;
 #endif
@@ -152,7 +160,7 @@ int peak_open(int index)
 
 void peak_close(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     TPCANStatus pcan_status;
 
@@ -163,14 +171,18 @@ void peak_close(int index)
     }
 
 #else
+  #ifdef VENIENT_PEAK_DRV_DISABLED
+    set_error_reason("PEAK driver is disabled.");
+  #else
     set_error_reason("PEAK driver is only supported on Windows.");
+  #endif
     (void)index;
 #endif
 }
 
 int peak_update(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     TPCANStatus pcan_status;
 
@@ -191,8 +203,11 @@ int peak_update(int index)
     }
 
 #else
-
+  #ifdef VENIENT_PEAK_DRV_DISABLED
+    set_error_reason("PEAK driver is disabled.");
+  #else
     set_error_reason("PEAK driver is only supported on Windows.");
+  #endif
     (void)index;
     return -1;
 #endif
@@ -200,14 +215,18 @@ int peak_update(int index)
 
 int peak_set_baudrate(int index, enum can_baudrate baud)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     can_close(index);
     can_interface[index].baudrate = baud;
     return can_open(index, baud);
 
 #else
+  #ifdef VENIENT_PEAK_DRV_DISABLED
+    set_error_reason("PEAK driver is disabled.");
+  #else
     set_error_reason("PEAK driver is only supported on Windows.");
+  #endif
     (void)index;
     (void)baud;
     return -1;
@@ -216,7 +235,7 @@ int peak_set_baudrate(int index, enum can_baudrate baud)
 
 int peak_send(int index, struct can_frame* frame)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
@@ -242,7 +261,11 @@ int peak_send(int index, struct can_frame* frame)
     return 0;
 
 #else
+  #ifdef VENIENT_PEAK_DRV_DISABLED
+    set_error_reason("PEAK driver is disabled.");
+  #else
     set_error_reason("PEAK driver is only supported on Windows.");
+  #endif
     (void)index;
     (void)frame;
     return -1;
@@ -251,7 +274,7 @@ int peak_send(int index, struct can_frame* frame)
 
 int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
@@ -278,8 +301,11 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
     return 0;
 
 #else
-
+  #ifdef VENIENT_PEAK_DRV_DISABLED
+    set_error_reason("PEAK driver is disabled.");
+  #else
     set_error_reason("PEAK driver is only supported on Windows.");
+  #endif
     (void)index;
     (void)frame;
     (void)timestamp;
@@ -287,7 +313,8 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 #endif
 }
 
-#ifdef _WIN32
+
+#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
 static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud)
 {
     switch (baud)

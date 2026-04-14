@@ -7,16 +7,24 @@
  *  SPDX-License-Identifier: MIT
  *
  **/
-
+#include "global.h"
 #include "CANvenient.h"
 
-int ixxat_find_interfaces(void);
+#ifdef __cplusplus
+  extern "C" {
+#endif
 
-int ixxat_open(int index);
-void ixxat_close(int index);
-int ixxat_update(int index);
+int ixxat_find_interfaces(void) ATTRIBUTE_INTERNAL;
 
-int ixxat_set_baudrate(int index, enum can_baudrate baud);
+int ixxat_open(int index) ATTRIBUTE_INTERNAL;
+void ixxat_close(int index) ATTRIBUTE_INTERNAL;
+int ixxat_update(int index) ATTRIBUTE_INTERNAL;
 
-int ixxat_send(int index, struct can_frame* frame);
-int ixxat_recv(int index, struct can_frame* frame, u64* timestamp);
+int ixxat_set_baudrate(int index, enum can_baudrate baud) ATTRIBUTE_INTERNAL;
+
+int ixxat_send(int index, struct can_frame* frame) ATTRIBUTE_INTERNAL;
+int ixxat_recv(int index, struct can_frame* frame, u64* timestamp) ATTRIBUTE_INTERNAL;
+
+#ifdef __cplusplus
+  }
+#endif

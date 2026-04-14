@@ -16,7 +16,11 @@
 #include "CANvenient.h"
 #include "CANvenient_internal.h"
 
-#ifdef _WIN32
+#ifdef VENIENT_SOFTING_DRV_DISABLED
+  #pragma message("!!!!!! WARNING: Softing driver is disabled. !!!!!!")
+#endif
+
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 #include <windows.h>
 #include <Can_def.h>
 #include <CANL2.H>
@@ -35,7 +39,7 @@ static double softing_baudrate_to_kbps(enum can_baudrate baud);
 
 int softing_find_interfaces(void)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     unsigned long buf_size_needed = 0;
     unsigned long num_channels = 0;
@@ -127,7 +131,7 @@ int softing_find_interfaces(void)
 
 int softing_open(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     softing_ctx_t* ctx = (softing_ctx_t*)can_interface[index].internal;
     L2CONFIG cfg;
@@ -205,7 +209,11 @@ int softing_open(int index)
     return 0;
 
 #else
+  #ifdef VENIENT_SOFTING_DRV_DISABLED
+    set_error_reason("Softing driver is disabled.");
+  #else
     set_error_reason("Softing driver is only supported on Windows.");
+  #endif  
     (void)index;
     return -1;
 #endif
@@ -213,7 +221,7 @@ int softing_open(int index)
 
 void softing_close(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     softing_ctx_t* ctx = (softing_ctx_t*)can_interface[index].internal;
 
@@ -231,14 +239,18 @@ void softing_close(int index)
     can_interface[index].opened = 0;
 
 #else
+  #ifdef VENIENT_SOFTING_DRV_DISABLED
+    set_error_reason("Softing driver is disabled.");
+  #else
     set_error_reason("Softing driver is only supported on Windows.");
+  #endif  
     (void)index;
 #endif
 }
 
 int softing_update(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     const softing_ctx_t* ctx;
     unsigned long buf_size_needed = 0;
@@ -293,7 +305,11 @@ int softing_update(int index)
     return 0;
 
 #else
+  #ifdef VENIENT_SOFTING_DRV_DISABLED
+    set_error_reason("Softing driver is disabled.");
+  #else
     set_error_reason("Softing driver is only supported on Windows.");
+  #endif  
     (void)index;
     return -1;
 #endif
@@ -301,14 +317,18 @@ int softing_update(int index)
 
 int softing_set_baudrate(int index, enum can_baudrate baud)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     softing_close(index);
     can_interface[index].baudrate = baud;
     return softing_open(index);
 
 #else
+  #ifdef VENIENT_SOFTING_DRV_DISABLED
+    set_error_reason("Softing driver is disabled.");
+  #else
     set_error_reason("Softing driver is only supported on Windows.");
+  #endif  
     (void)index;
     (void)baud;
     return -1;
@@ -317,7 +337,7 @@ int softing_set_baudrate(int index, enum can_baudrate baud)
 
 int softing_send(int index, struct can_frame* frame)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     softing_ctx_t* ctx = (softing_ctx_t*)can_interface[index].internal;
     unsigned long ident;
@@ -351,7 +371,11 @@ int softing_send(int index, struct can_frame* frame)
     return 0;
 
 #else
+  #ifdef VENIENT_SOFTING_DRV_DISABLED
+    set_error_reason("Softing driver is disabled.");
+  #else
     set_error_reason("Softing driver is only supported on Windows.");
+  #endif  
     (void)index;
     (void)frame;
     return -1;
@@ -360,7 +384,7 @@ int softing_send(int index, struct can_frame* frame)
 
 int softing_recv(int index, struct can_frame* frame, u64* timestamp)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 
     softing_ctx_t* ctx = (softing_ctx_t*)can_interface[index].internal;
     PARAM_STRUCT param;
@@ -404,7 +428,11 @@ int softing_recv(int index, struct can_frame* frame, u64* timestamp)
     return -1;
 
 #else
+  #ifdef VENIENT_SOFTING_DRV_DISABLED
+    set_error_reason("Softing driver is disabled.");
+  #else
     set_error_reason("Softing driver is only supported on Windows.");
+  #endif  
     (void)index;
     (void)frame;
     (void)timestamp;
@@ -412,7 +440,7 @@ int softing_recv(int index, struct can_frame* frame, u64* timestamp)
 #endif
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_SOFTING_DRV_DISABLED)
 static double softing_baudrate_to_kbps(enum can_baudrate baud)
 {
     switch (baud)

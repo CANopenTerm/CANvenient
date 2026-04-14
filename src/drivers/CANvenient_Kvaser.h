@@ -7,17 +7,25 @@
  *  SPDX-License-Identifier: MIT
  *
  **/
-
+#include "global.h"
 #include "CANvenient.h"
 
-int kvaser_find_interfaces(void);
+#ifdef __cplusplus
+  extern "C" {
+#endif
 
-int kvaser_open(int index);
-int kvaser_open_fd(int index);
-void kvaser_close(int index);
-int kvaser_update(int index);
+int kvaser_find_interfaces(void) ATTRIBUTE_INTERNAL;
 
-int kvaser_set_baudrate(int index, enum can_baudrate baud);
+int kvaser_open(int index) ATTRIBUTE_INTERNAL;
+int kvaser_open_fd(int index) ATTRIBUTE_INTERNAL;
+void kvaser_close(int index) ATTRIBUTE_INTERNAL;
+int kvaser_update(int index) ATTRIBUTE_INTERNAL;
 
-int kvaser_send(int index, struct can_frame* frame);
-int kvaser_recv(int index, struct can_frame* frame, u64* timestamp);
+int kvaser_set_baudrate(int index, enum can_baudrate baud) ATTRIBUTE_INTERNAL;
+
+int kvaser_send(int index, struct can_frame* frame) ATTRIBUTE_INTERNAL;
+int kvaser_recv(int index, struct can_frame* frame, u64* timestamp) ATTRIBUTE_INTERNAL;
+
+#ifdef __cplusplus
+  }
+#endif

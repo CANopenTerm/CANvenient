@@ -16,7 +16,11 @@
 #include "CANvenient.h"
 #include "CANvenient_internal.h"
 
-#ifdef _WIN32
+#ifdef VENIENT_KVASER_DRV_DISABLED
+  #pragma message("!!!!!! WARNING: Kvaser driver is disabled. !!!!!!")
+#endif
+
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 #include <windows.h>
 #include <canlib.h>
 
@@ -33,7 +37,7 @@ static const char* get_canlib_error_text(canStatus status);
 
 int kvaser_find_interfaces(void)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     int channel_count = 0;
     canStatus status;
@@ -118,7 +122,7 @@ int kvaser_find_interfaces(void)
 
 int kvaser_open(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     kvaser_channel_info_t* ch_info = (kvaser_channel_info_t*)can_interface[index].internal;
     CanHandle hnd;
@@ -152,7 +156,11 @@ int kvaser_open(int index)
     return 0;
 
 #else
+  #ifdef VENIENT_KVASER_DRV_DISABLED
+    set_error_reason("Kvaser driver is disabled.");
+  #else
     set_error_reason("Kvaser driver is only supported on Windows.");
+  #endif  
     (void)index;
     return -1;
 #endif
@@ -160,7 +168,7 @@ int kvaser_open(int index)
 
 void kvaser_close(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     kvaser_channel_info_t* ch_info = (kvaser_channel_info_t*)can_interface[index].internal;
 
@@ -175,14 +183,18 @@ void kvaser_close(int index)
     can_interface[index].opened = 0;
 
 #else
+  #ifdef VENIENT_KVASER_DRV_DISABLED
+    set_error_reason("Kvaser driver is disabled.");
+  #else
     set_error_reason("Kvaser driver is only supported on Windows.");
+  #endif  
     (void)index;
 #endif
 }
 
 int kvaser_update(int index)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     kvaser_channel_info_t* ch_info;
     canStatus status;
@@ -204,7 +216,11 @@ int kvaser_update(int index)
     return 0;
 
 #else
+  #ifdef VENIENT_KVASER_DRV_DISABLED
+    set_error_reason("Kvaser driver is disabled.");
+  #else
     set_error_reason("Kvaser driver is only supported on Windows.");
+  #endif  
     (void)index;
     return -1;
 #endif
@@ -212,7 +228,7 @@ int kvaser_update(int index)
 
 int kvaser_set_baudrate(int index, enum can_baudrate baud)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     can_close(index);
     can_interface[index].baudrate = baud;
@@ -228,7 +244,7 @@ int kvaser_set_baudrate(int index, enum can_baudrate baud)
 
 int kvaser_send(int index, struct can_frame* frame)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     kvaser_channel_info_t* ch_info = (kvaser_channel_info_t*)can_interface[index].internal;
     canStatus status;
@@ -243,7 +259,11 @@ int kvaser_send(int index, struct can_frame* frame)
     return 0;
 
 #else
+  #ifdef VENIENT_KVASER_DRV_DISABLED
+    set_error_reason("Kvaser driver is disabled.");
+  #else
     set_error_reason("Kvaser driver is only supported on Windows.");
+  #endif  
     (void)index;
     (void)frame;
     return -1;
@@ -252,7 +272,7 @@ int kvaser_send(int index, struct can_frame* frame)
 
 int kvaser_recv(int index, struct can_frame* frame, u64* timestamp)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 
     kvaser_channel_info_t* ch_info = (kvaser_channel_info_t*)can_interface[index].internal;
     canStatus status;
@@ -278,7 +298,11 @@ int kvaser_recv(int index, struct can_frame* frame, u64* timestamp)
     return 0;
 
 #else
+  #ifdef VENIENT_KVASER_DRV_DISABLED
+    set_error_reason("Kvaser driver is disabled.");
+  #else
     set_error_reason("Kvaser driver is only supported on Windows.");
+  #endif  
     (void)index;
     (void)frame;
     (void)timestamp;
@@ -286,7 +310,8 @@ int kvaser_recv(int index, struct can_frame* frame, u64* timestamp)
 #endif
 }
 
-#ifdef _WIN32
+
+#if defined(_WIN32) && !defined(VENIENT_KVASER_DRV_DISABLED)
 static long baudrate_to_canlib(enum can_baudrate baud)
 {
     switch (baud)
