@@ -134,11 +134,11 @@ static const char* lookup_error_string(int32_t can_error, int32_t tcan_error)
 static char* mhs_strdup(const char* str)
 {
     size_t len;
-    char* new_str;
 
     if (str)
     {
-        len = strlen(str) + 1;
+        char* new_str;
+        len = strnlen(str, 100);
         new_str = (char*)malloc(len);
         if (! new_str)
         {
@@ -156,7 +156,7 @@ static char* mhs_strdup(const char* str)
 int tinycan_find_interfaces(void)
 {
     int res;
-    uint32_t k, idx, already_registered;
+    uint32_t k, idx;
     struct TCanDevicesList* can_dev_list;
     int32_t num_devs, i;
     char dev_name[100];
@@ -180,9 +180,10 @@ int tinycan_find_interfaces(void)
     }
     for (i = 0; i < num_devs; i++)
     {
+        uint32_t already_registered = 0;
+
         snprintf(dev_name, sizeof(dev_name), "%s (S/N: %s)", can_dev_list[i].Description, can_dev_list[i].SerialNumber);
 
-        already_registered = 0;
         for (k = 0; k < CAN_MAX_INTERFACES; k++)
         {
             if (can_interface[k].name && strcmp(can_interface[k].name, dev_name) == 0)
@@ -368,7 +369,6 @@ int tinycan_send(int index, struct can_frame* frame)
 
 int tinycan_recv(int index, struct can_frame* frame, u64* timestamp)
 {
-    uint8_t len;
     uint32_t dev_idx;
     struct TCanMsg tcan_msg;
     int32_t can_error, tcan_res;
@@ -379,7 +379,7 @@ int tinycan_recv(int index, struct can_frame* frame, u64* timestamp)
     {
         if (! tcan_msg.MsgRTR)
         {
-            len = (uint8_t)tcan_msg.MsgLen;
+            uint8_t len = (uint8_t)tcan_msg.MsgLen;
             frame->can_id = tcan_msg.Id;
             frame->can_dlc = len;
             if (len)
