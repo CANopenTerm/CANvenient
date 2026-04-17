@@ -275,14 +275,14 @@ int tinycan_open(int index)
     if (! err)
     {
         err = CanDeviceOpen(tiny_device->DeviceIndex, DEVICE_OPEN_PARAM);
-    }
-    if (! err)
-    {
-        err = CanSetMode(tiny_device->DeviceIndex, OP_CAN_START, CAN_CMD_ALL_CLEAR);
-    }
-    if (err)
-    {
-        return (-1);
+        if (! err)
+        {
+            err = CanSetMode(tiny_device->DeviceIndex, OP_CAN_START, CAN_CMD_ALL_CLEAR);
+            if (err)
+            {
+                return (-1);
+            }
+        }
     }
     else
     {
@@ -291,7 +291,7 @@ int tinycan_open(int index)
     }
 
 #else
-    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    set_error_reason("Tiny-Can driver is only supported on Windows.");
     (void)index;
     return -1;
 #endif
@@ -311,7 +311,7 @@ void tinycan_close(int index)
     can_interface[index].opened = 0; // <*>
 
 #else
-    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    set_error_reason("Tiny-Can driver is only supported on Windows.");
     (void)index;
 #endif
 }
@@ -351,7 +351,7 @@ int tinycan_update(int index)
 
 #else
 
-    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    set_error_reason("Tiny-Can driver is only supported on Windows.");
     (void)index;
     return -1;
 #endif
@@ -366,7 +366,7 @@ int tinycan_set_baudrate(int index, enum can_baudrate baud)
     return can_open(index, baud);
 
 #else
-    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    set_error_reason("Tiny-Can driver is only supported on Windows.");
     (void)index;
     (void)baud;
     return -1;
@@ -406,7 +406,7 @@ int tinycan_send(int index, struct can_frame* frame)
     return (0);
 
 #else
-    set_error_reason("Tiny-CAN driver is currently only supported on Windows.");
+    set_error_reason("Tiny-CAN driver is only supported on Windows.");
     (void)index;
     (void)frame;
     return -1;
@@ -458,7 +458,7 @@ int tinycan_recv(int index, struct can_frame* frame, u64* timestamp)
 
 #else
 
-    set_error_reason("Tiny-CAN driver is currently only supported on Windows.");
+    set_error_reason("Tiny-CAN driver is only supported on Windows.");
     (void)index;
     (void)frame;
     (void)timestamp;
