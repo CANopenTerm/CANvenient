@@ -136,12 +136,10 @@ static const char* lookup_error_string(int32_t can_error, int32_t tcan_error)
 
 static char* mhs_strdup(const char* str)
 {
-    size_t len;
-
     if (str)
     {
         char* new_str;
-        len = strnlen(str, 100);
+        size_t len = strnlen(str, 100);
         new_str = (char*)malloc(len);
         if (! new_str)
         {
@@ -247,7 +245,7 @@ int tinycan_open(int index)
     {
         return (-1);
     }
-    
+
     // Find matching baudrate
     tcan_baud = 0;
     for (b = &CanVenientToTCanBaudrate[0]; b->TCanBaudrate; b++)
@@ -258,12 +256,12 @@ int tinycan_open(int index)
             break;
         }
     }
-    
-    if (!tcan_baud || tcan_baud == 0xFFFF)
+
+    if (! tcan_baud || tcan_baud == 0xFFFF)
     {
         return (-1);
     }
-    
+
     if (tiny_device->DeviceIndex == INDEX_INVALID)
     {
         err = CanExCreateDevice(&tiny_device->DeviceIndex, "CanRxDFifoSize=16384");
@@ -272,22 +270,22 @@ int tinycan_open(int index)
             return (-1);
         }
     }
-    
+
     (void)CanExSetAsUWord(tiny_device->DeviceIndex, "CanSpeed1", tcan_baud);
     (void)CanExSetAsString(tiny_device->DeviceIndex, "Snr", tiny_device->Snr);
-    
+
     err = CanDeviceOpen(tiny_device->DeviceIndex, DEVICE_OPEN_PARAM);
     if (err)
     {
         return (-1);
     }
-    
+
     err = CanSetMode(tiny_device->DeviceIndex, OP_CAN_START, CAN_CMD_ALL_CLEAR);
     if (err)
     {
         return (-1);
     }
-    
+
     can_interface[index].opened = 1;
     return (0);
 
