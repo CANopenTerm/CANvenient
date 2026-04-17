@@ -283,6 +283,7 @@ int tinycan_open(int index)
                 return (-1);
             }
         }
+        return (0);
     }
     else
     {
