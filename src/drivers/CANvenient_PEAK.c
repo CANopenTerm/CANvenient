@@ -12,6 +12,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "CANvenient.h"
+#include "CANvenient_internal.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #include <PCANBasic.h>
@@ -20,9 +23,6 @@ static char* lookup_bus_name(DWORD device_type);
 static char* lookup_error_string(TPCANStatus pcan_status);
 static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud);
 #endif
-
-#include "CANvenient.h"
-#include "CANvenient_internal.h"
 
 int peak_find_interfaces(void)
 {

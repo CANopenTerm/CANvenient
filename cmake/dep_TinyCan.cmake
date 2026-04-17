@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.16)
+project(TinyCan_devel C)
+
+add_library(
+  mhstcan
+  SHARED
+  ${CMAKE_CURRENT_SOURCE_DIR}/dev/lib/mhs_can_drv.c)
+
+set_target_properties(mhstcan PROPERTIES
+  WINDOWS_EXPORT_ALL_SYMBOLS ON
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")

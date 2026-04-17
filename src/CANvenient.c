@@ -18,6 +18,7 @@
 #include "drivers/CANvenient_SocketCAN.h"
 #include "drivers/CANvenient_Softing.h"
 #include "drivers/CANvenient_PEAK.h"
+#include "drivers/CANvenient_TinyCan.h"
 
 struct can_iface can_interface[CAN_MAX_INTERFACES] = {0};
 char can_error_reason[1024] = {0};
@@ -45,6 +46,12 @@ CANVENIENT_API int can_find_interfaces(void)
     }
 
     status = socketcan_find_interfaces();
+    if (status < 0)
+    {
+        return status;
+    }
+
+    status = tinycan_find_interfaces();
     if (status < 0)
     {
         return status;
@@ -83,6 +90,8 @@ CANVENIENT_API int can_open(int index, enum can_baudrate baud)
             return socketcan_open(index);
         case CAN_VENDOR_SOFTING:
             return softing_open(index);
+        case CAN_VENDOR_MHS:
+            return tinycan_open(index);
         default:
         case CAN_VENDOR_NONE:
             set_error_reason("No CAN interface found at specified index.");
@@ -115,6 +124,9 @@ CANVENIENT_API void can_close(int index)
             break;
         case CAN_VENDOR_SOFTING:
             softing_close(index);
+            break;
+        case CAN_VENDOR_MHS:
+            tinycan_close(index);
             break;
         default:
         case CAN_VENDOR_NONE:
@@ -167,6 +179,8 @@ CANVENIENT_API int can_update(int index)
             break;
         case CAN_VENDOR_SOFTING:
             return softing_update(index);
+        case CAN_VENDOR_MHS:
+            return tinycan_update(index);
         default:
         case CAN_VENDOR_NONE:
             set_error_reason("No CAN interface found at specified index.");
@@ -181,7 +195,7 @@ CANVENIENT_API int can_get_baudrate(int index, enum can_baudrate* baud)
         set_error_reason("Channel index is out-of-range.");
         return -1;
     }
-    else if (!baud)
+    else if (! baud)
     {
         set_error_reason("Output parameter is NULL.");
         return -1;
@@ -256,6 +270,8 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
             return socketcan_set_baudrate(index, baud);
         case CAN_VENDOR_SOFTING:
             return softing_set_baudrate(index, baud);
+        case CAN_VENDOR_MHS:
+            return tinycan_set_baudrate(index, baud);
         default:
         case CAN_VENDOR_NONE:
             set_error_reason("No CAN interface found at specified index.");
@@ -283,6 +299,8 @@ CANVENIENT_API int can_send(int index, struct can_frame* frame)
             return socketcan_send(index, frame);
         case CAN_VENDOR_SOFTING:
             return softing_send(index, frame);
+        case CAN_VENDOR_MHS:
+            return tinycan_send(index, frame);
         default:
         case CAN_VENDOR_NONE:
             set_error_reason("No CAN interface found at specified index.");
@@ -310,6 +328,8 @@ CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp)
             return socketcan_recv(index, frame, timestamp);
         case CAN_VENDOR_SOFTING:
             return softing_recv(index, frame, timestamp);
+        case CAN_VENDOR_MHS:
+            return tinycan_recv(index, frame, timestamp);
         default:
         case CAN_VENDOR_NONE:
             set_error_reason("No CAN interface found at specified index.");
