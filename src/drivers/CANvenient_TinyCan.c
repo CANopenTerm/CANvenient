@@ -11,16 +11,19 @@
  *
  **/
 
+#ifdef _WIN32
 #include <can_drv.h>
 #include <can_types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#endif
 
 #include "CANvenient.h"
 #include "CANvenient_internal.h"
 
+#ifdef _WIN32
 typedef struct _TTinyDevice TTinyDevice;
 
 struct _TTinyDevice
@@ -152,17 +155,18 @@ static char* mhs_strdup(const char* str)
         return (NULL);
     }
 }
+#endif
 
 int tinycan_find_interfaces(void)
 {
-    int res;
+    int res = 0;
+#ifdef _WIN32
     uint32_t k, idx;
     struct TCanDevicesList* can_dev_list;
     int32_t num_devs, i;
     char dev_name[100];
     TTinyDevice* tiny_device;
 
-    res = 0;
     if (! TinyCanDriverInit)
     {
         if (LoadDriver(NULL) >= 0)
@@ -227,11 +231,13 @@ int tinycan_find_interfaces(void)
     {
         set_error_reason("Memory allocation failed.");
     }
+#endif
     return (res);
 }
 
 int tinycan_open(int index)
 {
+#ifdef _WIN32
     int32_t err;
     TTinyDevice* tiny_device;
     const struct TCanVenientToTCanBaudrate* b;
@@ -283,10 +289,18 @@ int tinycan_open(int index)
         can_interface[index].opened = 1;
         return (0);
     }
+
+#else
+    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    (void)index;
+    return -1;
+#endif
 }
 
 void tinycan_close(int index)
 {
+#ifdef _WIN32
+
     TTinyDevice* tiny_device;
 
     if (! (tiny_device = (TTinyDevice*)can_interface[index].internal))
@@ -295,10 +309,17 @@ void tinycan_close(int index)
     }
     (void)CanDeviceClose(tiny_device->DeviceIndex);
     can_interface[index].opened = 0; // <*>
+
+#else
+    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    (void)index;
+#endif
 }
 
 int tinycan_update(int index)
 {
+#ifdef _WIN32
+
     uint32_t dev_idx;
     struct TDeviceStatus status;
 
@@ -327,17 +348,35 @@ int tinycan_update(int index)
         return (-1);
     }
     return (0);
+
+#else
+
+    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    (void)index;
+    return -1;
+#endif
 }
 
 int tinycan_set_baudrate(int index, enum can_baudrate baud)
 {
+#ifdef _WIN32
+
     can_close(index);
     can_interface[index].baudrate = baud;
     return can_open(index, baud);
+
+#else
+    set_error_reason("Tiny-Can driver is currently only supported on Windows.");
+    (void)index;
+    (void)baud;
+    return -1;
+#endif
 }
 
 int tinycan_send(int index, struct can_frame* frame)
 {
+#ifdef _WIN32
+
     uint32_t dev_idx, len;
     struct TCanMsg tcan_msg;
     int32_t can_error, tcan_res;
@@ -365,10 +404,19 @@ int tinycan_send(int index, struct can_frame* frame)
         return (-1);
     }
     return (0);
+
+#else
+    set_error_reason("Tiny-CAN driver is currently only supported on Windows.");
+    (void)index;
+    (void)frame;
+    return -1;
+#endif
 }
 
 int tinycan_recv(int index, struct can_frame* frame, u64* timestamp)
 {
+#ifdef _WIN32
+
     uint32_t dev_idx;
     struct TCanMsg tcan_msg;
     int32_t can_error, tcan_res;
@@ -407,4 +455,13 @@ int tinycan_recv(int index, struct can_frame* frame, u64* timestamp)
         return (-1);
     }
     return (0);
+
+#else
+
+    set_error_reason("Tiny-CAN driver is currently only supported on Windows.");
+    (void)index;
+    (void)frame;
+    (void)timestamp;
+    return -1;
+#endif
 }
