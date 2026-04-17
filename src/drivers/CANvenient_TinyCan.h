@@ -23,7 +23,7 @@ extern "C"
 
     int tinycan_set_baudrate(int index, enum can_baudrate baud);
 
-    int tinycan_send(int index, struct can_frame* frame);
+    int tinycan_send(int index, const struct can_frame* frame);
     int tinycan_recv(int index, struct can_frame* frame, u64* timestamp);
 
 #ifdef __cplusplus
