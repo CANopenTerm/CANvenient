@@ -15,11 +15,7 @@
 #include "CANvenient.h"
 #include "CANvenient_internal.h"
 
-#ifdef VENIENT_IXXAT_DRV_DISABLED
-  #pragma message("!!!!!! WARNING: Ixxat driver is disabled. !!!!!!")
-#endif
-
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 #include <windows.h>
 #include <initguid.h>
 #include <vcisdk.h>
@@ -40,7 +36,7 @@ static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1);
 
 int ixxat_find_interfaces(void)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     IVciDeviceManager* pDevMan = NULL;
     IVciEnumDevice* pEnum = NULL;
@@ -149,7 +145,7 @@ int ixxat_find_interfaces(void)
 
 int ixxat_open(int index)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     ixxat_ctx_t* ctx;
     IVciDeviceManager* pDevMan = NULL;
@@ -245,11 +241,7 @@ int ixxat_open(int index)
     return 0;
 
 #else
-  #ifdef VENIENT_IXXAT_DRV_DISABLED
-    set_error_reason("Ixxat driver is disabled.");
-  #else
     set_error_reason("Ixxat driver is only supported on Windows.");
-  #endif  
     (void)index;
     return -1;
 #endif
@@ -257,7 +249,7 @@ int ixxat_open(int index)
 
 void ixxat_close(int index)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
     if (ctx)
@@ -281,18 +273,14 @@ void ixxat_close(int index)
     }
 
 #else
-  #ifdef VENIENT_IXXAT_DRV_DISABLED
-    set_error_reason("Ixxat driver is disabled.");
-  #else
     set_error_reason("Ixxat driver is only supported on Windows.");
-  #endif  
     (void)index;
 #endif
 }
 
 int ixxat_update(int index)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     ixxat_ctx_t* ctx;
     IVciDeviceManager* pDevMan = NULL;
@@ -324,11 +312,7 @@ int ixxat_update(int index)
     return 0;
 
 #else
-  #ifdef VENIENT_IXXAT_DRV_DISABLED
-    set_error_reason("Ixxat driver is disabled.");
-  #else
     set_error_reason("Ixxat driver is only supported on Windows.");
-  #endif  
     (void)index;
     return -1;
 #endif
@@ -336,7 +320,7 @@ int ixxat_update(int index)
 
 int ixxat_set_baudrate(int index, enum can_baudrate baud)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
     IVciDeviceManager* pDevMan = NULL;
@@ -478,11 +462,7 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
     return 0;
 
 #else
-  #ifdef VENIENT_IXXAT_DRV_DISABLED
-    set_error_reason("Ixxat driver is disabled.");
-  #else
     set_error_reason("Ixxat driver is only supported on Windows.");
-  #endif  
     (void)index;
     (void)baud;
     return -1;
@@ -491,7 +471,7 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
 
 int ixxat_send(int index, struct can_frame* frame)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
     CANMSG msg = {0};
@@ -523,11 +503,7 @@ int ixxat_send(int index, struct can_frame* frame)
     return 0;
 
 #else
-  #ifdef VENIENT_IXXAT_DRV_DISABLED
-    set_error_reason("Ixxat driver is disabled.");
-  #else
     set_error_reason("Ixxat driver is only supported on Windows.");
-  #endif  
     (void)index;
     (void)frame;
     return -1;
@@ -536,7 +512,7 @@ int ixxat_send(int index, struct can_frame* frame)
 
 int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
 {
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 
     ixxat_ctx_t* ctx = (ixxat_ctx_t*)can_interface[index].internal;
     CANMSG msg = {0};
@@ -574,11 +550,7 @@ int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
     return 0;
 
 #else
-  #ifdef VENIENT_IXXAT_DRV_DISABLED
-    set_error_reason("Ixxat driver is disabled.");
-  #else
     set_error_reason("Ixxat driver is only supported on Windows.");
-  #endif  
     (void)index;
     (void)frame;
     (void)timestamp;
@@ -586,7 +558,7 @@ int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
 #endif
 }
 
-#if defined(_WIN32) && !defined(VENIENT_IXXAT_DRV_DISABLED)
+#ifdef _WIN32
 static void ixxat_baudrate_to_btr(enum can_baudrate baud, u8* bt0, u8* bt1)
 {
     switch (baud)

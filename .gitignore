@@ -1,6 +1,5 @@
 .vs
-bin
-obj
+deps*
 out
 build
 tmp

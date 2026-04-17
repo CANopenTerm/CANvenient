@@ -152,11 +152,40 @@ if(WIN32)
   set(SOFTING_INCLUDE_DIR "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL")
   set(SOFTING_LIBRARY     "${SOFTING_PATH}/CAN/CAN Layer2/APIDLL/${SOFTING_PLATFORM}/canL2${SOFTING_POSTFIX}.lib")
 
+  # Tiny-Can
+  set(TINYCAN_VERSION "8.12")
+
+  set(TINYCAN_DEVEL_PKG  TinyCan_v${TINYCAN_VERSION}.zip)
+  set(TINYCAN_DEVEL_URL  https://canopenterm.de/mirror)
+  set(TINYCAN_DEVEL_HASH c047e901ccb34bc764fb5dc5f2359dad82ff55c4)
+
+  ExternalProject_Add(TinyCan_devel
+    URL ${TINYCAN_DEVEL_URL}/${TINYCAN_DEVEL_PKG}
+    URL_HASH SHA1=${TINYCAN_DEVEL_HASH}
+    DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps
+    DOWNLOAD_NO_PROGRESS true
+    DOWNLOAD_EXTRACT_TIMESTAMP true
+    TLS_VERIFY true
+    SOURCE_DIR ${TINYCAN_PATH}/
+    BUILD_BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/mhstcan.dll"
+
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_BINARY_DIR}/TinyCan_devel-prefix/src/TinyCan_devel-build/mhstcan.dll"
+      ${CMAKE_CURRENT_BINARY_DIR}/
+
+    PATCH_COMMAND ${CMAKE_COMMAND} -E copy
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_TinyCan.cmake" ${TINYCAN_PATH}/CMakeLists.txt
+  )
+
+  set(TINYCAN_INCLUDE_DIR "${TINYCAN_PATH}/dev/lib")
+  set(TINYCAN_LIBRARY     "${CMAKE_CURRENT_BINARY_DIR}/TinyCan_devel-prefix/src/TinyCan_devel-build/mhstcan.lib")
+
   set(PLATFORM_DEPS
     Ixxat_devel
     Kvaser_devel
     PCAN_devel
     Softing_devel
+    TinyCan_devel
   )
 
   set(PLATFORM_LIBS
@@ -164,6 +193,7 @@ if(WIN32)
     ${KVASER_LIBRARY}
     ${PCAN_LIBRARY}
     ${SOFTING_LIBRARY}
+    ${TINYCAN_LIBRARY}
   )
 
   include_directories(
@@ -174,6 +204,7 @@ if(WIN32)
     SYSTEM ${PCAN_INCLUDE_DIR}/../src/pcan/driver
     SYSTEM ${PCAN_INCLUDE_DIR}/../src/pcan/lib
     SYSTEM ${SOFTING_INCLUDE_DIR}
+    SYSTEM ${TINYCAN_INCLUDE_DIR}
   )
 
   add_dependencies(
@@ -182,5 +213,6 @@ if(WIN32)
     Kvaser_devel
     PCAN_devel
     Softing_devel
+    TinyCan_devel
   )
 endif()

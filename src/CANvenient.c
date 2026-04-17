@@ -56,6 +56,7 @@ CANVENIENT_API int can_find_interfaces(void)
     {
         return status;
     }
+
     return softing_find_interfaces();
 }
 
@@ -194,7 +195,7 @@ CANVENIENT_API int can_get_baudrate(int index, enum can_baudrate* baud)
         set_error_reason("Channel index is out-of-range.");
         return -1;
     }
-    else if (!baud)
+    else if (! baud)
     {
         set_error_reason("Output parameter is NULL.");
         return -1;

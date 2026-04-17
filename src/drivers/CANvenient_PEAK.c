@@ -15,11 +15,7 @@
 #include "CANvenient.h"
 #include "CANvenient_internal.h"
 
-#ifdef VENIENT_PEAK_DRV_DISABLED
-  #pragma message("!!!!!! WARNING: PEAK driver is disabled. !!!!!!")
-#endif
-
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 #include <windows.h>
 #include <PCANBasic.h>
 
@@ -30,7 +26,7 @@ static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud);
 
 int peak_find_interfaces(void)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     u32 ch_count = 0;
     TPCANChannelInformation* pcan_ch_info;
@@ -130,7 +126,7 @@ int peak_find_interfaces(void)
 
 int peak_open(int index)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
@@ -148,11 +144,7 @@ int peak_open(int index)
     }
 
 #else
-  #ifdef VENIENT_PEAK_DRV_DISABLED
-    set_error_reason("PEAK driver is disabled.");
-  #else
     set_error_reason("PEAK driver is only supported on Windows.");
-  #endif
     (void)index;
     return -1;
 #endif
@@ -160,7 +152,7 @@ int peak_open(int index)
 
 void peak_close(int index)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     TPCANStatus pcan_status;
 
@@ -171,18 +163,14 @@ void peak_close(int index)
     }
 
 #else
-  #ifdef VENIENT_PEAK_DRV_DISABLED
-    set_error_reason("PEAK driver is disabled.");
-  #else
     set_error_reason("PEAK driver is only supported on Windows.");
-  #endif
     (void)index;
 #endif
 }
 
 int peak_update(int index)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     TPCANStatus pcan_status;
 
@@ -203,11 +191,8 @@ int peak_update(int index)
     }
 
 #else
-  #ifdef VENIENT_PEAK_DRV_DISABLED
-    set_error_reason("PEAK driver is disabled.");
-  #else
+
     set_error_reason("PEAK driver is only supported on Windows.");
-  #endif
     (void)index;
     return -1;
 #endif
@@ -215,18 +200,14 @@ int peak_update(int index)
 
 int peak_set_baudrate(int index, enum can_baudrate baud)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     can_close(index);
     can_interface[index].baudrate = baud;
     return can_open(index, baud);
 
 #else
-  #ifdef VENIENT_PEAK_DRV_DISABLED
-    set_error_reason("PEAK driver is disabled.");
-  #else
     set_error_reason("PEAK driver is only supported on Windows.");
-  #endif
     (void)index;
     (void)baud;
     return -1;
@@ -235,7 +216,7 @@ int peak_set_baudrate(int index, enum can_baudrate baud)
 
 int peak_send(int index, struct can_frame* frame)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
@@ -261,11 +242,7 @@ int peak_send(int index, struct can_frame* frame)
     return 0;
 
 #else
-  #ifdef VENIENT_PEAK_DRV_DISABLED
-    set_error_reason("PEAK driver is disabled.");
-  #else
     set_error_reason("PEAK driver is only supported on Windows.");
-  #endif
     (void)index;
     (void)frame;
     return -1;
@@ -274,7 +251,7 @@ int peak_send(int index, struct can_frame* frame)
 
 int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 {
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 
     TPCANHandle pcan_ch = ((TPCANChannelInformation*)can_interface[index].internal)->channel_handle;
     TPCANStatus pcan_status;
@@ -301,11 +278,8 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
     return 0;
 
 #else
-  #ifdef VENIENT_PEAK_DRV_DISABLED
-    set_error_reason("PEAK driver is disabled.");
-  #else
+
     set_error_reason("PEAK driver is only supported on Windows.");
-  #endif
     (void)index;
     (void)frame;
     (void)timestamp;
@@ -313,8 +287,7 @@ int peak_recv(int index, struct can_frame* frame, u64* timestamp)
 #endif
 }
 
-
-#if defined(_WIN32) && !defined(VENIENT_PEAK_DRV_DISABLED)
+#ifdef _WIN32
 static TPCANBaudrate lookup_pcan_baudrate(enum can_baudrate baud)
 {
     switch (baud)

@@ -13,10 +13,6 @@
 
 #include <stddef.h>
 
-#ifdef __cplusplus
-  extern "C" {
-#endif
-
 #define CAN_MAX_INTERFACES 64
 
 #ifdef _WIN32
@@ -114,9 +110,5 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud);
 
 CANVENIENT_API int can_send(int index, struct can_frame* frame);
 CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp);
-
-#ifdef __cplusplus
-  }
-#endif
 
 #endif /* CANVENIENT_H */
