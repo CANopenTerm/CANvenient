@@ -243,53 +243,53 @@ int tinycan_open(int index)
     const struct TCanVenientToTCanBaudrate* b;
     uint16_t tcan_baud;
 
-    err = 0;
     if (! (tiny_device = (TTinyDevice*)can_interface[index].internal))
     {
         return (-1);
     }
-    for (b = &CanVenientToTCanBaudrate[0]; (tcan_baud = b->TCanBaudrate); b++)
+    
+    // Find matching baudrate
+    tcan_baud = 0;
+    for (b = &CanVenientToTCanBaudrate[0]; b->TCanBaudrate; b++)
     {
         if (b->CanVenientBaud == can_interface[index].baudrate)
         {
+            tcan_baud = b->TCanBaudrate;
             break;
         }
     }
-    if (! tcan_baud)
+    
+    if (!tcan_baud || tcan_baud == 0xFFFF)
     {
-        err = -1;
+        return (-1);
     }
-    if (tcan_baud == 0xFFFF)
-    {
-        err = -1;
-    }
-    if ((! err) && (tiny_device->DeviceIndex == INDEX_INVALID))
+    
+    if (tiny_device->DeviceIndex == INDEX_INVALID)
     {
         err = CanExCreateDevice(&tiny_device->DeviceIndex, "CanRxDFifoSize=16384");
-    }
-    if (! err)
-    {
-        (void)CanExSetAsUWord(tiny_device->DeviceIndex, "CanSpeed1", tcan_baud);
-        (void)CanExSetAsString(tiny_device->DeviceIndex, "Snr", tiny_device->Snr);
-    }
-    if (! err)
-    {
-        err = CanDeviceOpen(tiny_device->DeviceIndex, DEVICE_OPEN_PARAM);
-        if (! err)
+        if (err)
         {
-            err = CanSetMode(tiny_device->DeviceIndex, OP_CAN_START, CAN_CMD_ALL_CLEAR);
-            if (err)
-            {
-                return (-1);
-            }
+            return (-1);
         }
-        return (0);
     }
-    else
+    
+    (void)CanExSetAsUWord(tiny_device->DeviceIndex, "CanSpeed1", tcan_baud);
+    (void)CanExSetAsString(tiny_device->DeviceIndex, "Snr", tiny_device->Snr);
+    
+    err = CanDeviceOpen(tiny_device->DeviceIndex, DEVICE_OPEN_PARAM);
+    if (err)
     {
-        can_interface[index].opened = 1;
-        return (0);
+        return (-1);
     }
+    
+    err = CanSetMode(tiny_device->DeviceIndex, OP_CAN_START, CAN_CMD_ALL_CLEAR);
+    if (err)
+    {
+        return (-1);
+    }
+    
+    can_interface[index].opened = 1;
+    return (0);
 
 #else
     set_error_reason("Tiny-Can driver is only supported on Windows.");
