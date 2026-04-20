@@ -113,7 +113,7 @@ static const char* lookup_error_string(int32_t can_error, int32_t tcan_error)
     const char* error_str;
     (void)tcan_error;
 
-    if (can_error)
+    if (! can_error)
     {
         error_str = "No error. Success.";
     }
@@ -139,13 +139,14 @@ static char* mhs_strdup(const char* str)
     if (str)
     {
         char* new_str;
-        size_t len = strnlen(str, 100);
-        new_str = (char*)malloc(len);
+        size_t len = strnlen(str, 256);
+        new_str = (char*)malloc(len + 1);
         if (! new_str)
         {
             return (NULL);
         }
         memcpy(new_str, str, len);
+        new_str[len] = '\0';
         return (new_str);
     }
     else
@@ -177,7 +178,7 @@ int tinycan_find_interfaces(void)
     }
     if ((num_devs = CanExGetDeviceList(&can_dev_list, 0)) <= 0)
     {
-        set_error_reason("No Tiny-CAN hardwre found");
+        set_error_reason("No Tiny-CAN hardware found");
         return (-1);
     }
     for (i = 0; i < num_devs; i++)
@@ -215,10 +216,11 @@ int tinycan_find_interfaces(void)
             free(can_interface[idx].internal);
             can_interface[idx].internal = NULL;
             res = -1;
+            break;
         }
 
         tiny_device->DeviceIndex = INDEX_INVALID;
-        snprintf(tiny_device->Snr, 20, "%s", can_dev_list[i].SerialNumber);
+        snprintf(tiny_device->Snr, sizeof(tiny_device->Snr), "%s", can_dev_list[i].SerialNumber);
 
         can_interface[idx].vendor = CAN_VENDOR_MHS;
         can_interface[idx].opened = 0;
@@ -306,8 +308,12 @@ void tinycan_close(int index)
     {
         return;
     }
-    (void)CanDeviceClose(tiny_device->DeviceIndex);
-    can_interface[index].opened = 0; // <*>
+    if (CanDeviceClose(tiny_device->DeviceIndex) < 0)
+    {
+        set_error_reason("Failed to close Tiny-CAN device.");
+    }
+    tiny_device->DeviceIndex = INDEX_INVALID;
+    can_interface[index].opened = 0;
 
 #else
     set_error_reason("Tiny-Can driver is only supported on Windows.");
@@ -437,7 +443,8 @@ int tinycan_recv(int index, struct can_frame* frame, u64* timestamp)
         }
         else
         {
-            can_error = CAN_ERROR_QRCVEMPTY;
+            /* RTR frame received but not handled; skip silently. */
+            return (0);
         }
     }
     else if (tcan_res == 0)
