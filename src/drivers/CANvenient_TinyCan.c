@@ -312,7 +312,6 @@ void tinycan_close(int index)
     {
         set_error_reason("Failed to close Tiny-CAN device.");
     }
-    tiny_device->DeviceIndex = INDEX_INVALID;
     can_interface[index].opened = 0;
 
 #else
