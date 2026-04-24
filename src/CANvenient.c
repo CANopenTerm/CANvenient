@@ -23,16 +23,44 @@
 struct can_iface can_interface[CAN_MAX_INTERFACES] = {0};
 char can_error_reason[1024] = {0};
 
-CANVENIENT_API int can_find_interfaces(void)
+CANVENIENT_API int can_find_interfaces_mask(u32 vendor_mask)
 {
-    ixxat_find_interfaces();
-    peak_find_interfaces();
-    kvaser_find_interfaces();
-    socketcan_find_interfaces();
-    tinycan_find_interfaces();
-    softing_find_interfaces();
+    if (vendor_mask == CAN_VENDOR_NONE)
+    {
+        return 0;
+    }
+
+    if (vendor_mask & CAN_VENDOR_IXXAT)
+    {
+        ixxat_find_interfaces();
+    }
+    if (vendor_mask & CAN_VENDOR_PEAK)
+    {
+        peak_find_interfaces();
+    }
+    if (vendor_mask & CAN_VENDOR_KVASER)
+    {
+        kvaser_find_interfaces();
+    }
+    if (vendor_mask & CAN_VENDOR_SOCKETCAN)
+    {
+        socketcan_find_interfaces();
+    }
+    if (vendor_mask & CAN_VENDOR_MHS)
+    {
+        tinycan_find_interfaces();
+    }
+    if (vendor_mask & CAN_VENDOR_SOFTING)
+    {
+        softing_find_interfaces();
+    }
 
     return 0;
+}
+
+CANVENIENT_API int can_find_interfaces(void)
+{
+    return can_find_interfaces_mask(CAN_VENDOR_ALL);
 }
 
 CANVENIENT_API void can_release_interfaces(void)

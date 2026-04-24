@@ -12,20 +12,6 @@
 #define CANVENIENT_INTERNAL_H
 
 /*
- * CAN interface vendor enumeration.
- */
-enum can_vendor
-{
-    CAN_VENDOR_NONE = 0,
-    CAN_VENDOR_IXXAT,
-    CAN_VENDOR_KVASER,
-    CAN_VENDOR_PEAK,
-    CAN_VENDOR_SOCKETCAN,
-    CAN_VENDOR_SOFTING,
-    CAN_VENDOR_MHS
-};
-
-/*
  * CAN interface.
  */
 struct can_iface

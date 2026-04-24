@@ -341,7 +341,7 @@ int softing_send(int index, const struct can_frame* frame)
         xtd = 0;
     }
 
-    ret = CANL2_send_data(ctx->hChannel, ident, xtd, (int)frame->can_dlc, frame->data);
+    ret = CANL2_send_data(ctx->hChannel, ident, xtd, (int)frame->can_dlc, (u8*)frame->data);
     if (CANL2_OK != ret)
     {
         set_error_reason("Failed to send CAN message.");

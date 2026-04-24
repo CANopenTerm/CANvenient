@@ -60,6 +60,22 @@ enum can_baudrate
     CAN_BAUD_5K
 };
 
+/*
+ * CAN interface vendor bitmask.
+ */
+enum can_vendor
+{
+    CAN_VENDOR_NONE = 0,
+    CAN_VENDOR_IXXAT = 1u << 0,
+    CAN_VENDOR_KVASER = 1u << 1,
+    CAN_VENDOR_PEAK = 1u << 2,
+    CAN_VENDOR_SOCKETCAN = 1u << 3,
+    CAN_VENDOR_SOFTING = 1u << 4,
+    CAN_VENDOR_MHS = 1u << 5,
+
+    CAN_VENDOR_ALL = CAN_VENDOR_IXXAT | CAN_VENDOR_KVASER | CAN_VENDOR_PEAK | CAN_VENDOR_SOCKETCAN | CAN_VENDOR_SOFTING | CAN_VENDOR_MHS
+};
+
 #ifndef _CAN_H
 #define _CAN_H
 
@@ -94,7 +110,15 @@ struct can_frame
 
 #endif /* _CAN_H */
 
+/*
+ * Finds all available CAN interfaces on the system.
+ */
 CANVENIENT_API int can_find_interfaces(void);
+
+/*
+ * Finds available CAN interfaces for the given vendor back-ends.
+ */
+CANVENIENT_API int can_find_interfaces_mask(u32 vendor_mask);
 CANVENIENT_API void can_release_interfaces(void);
 
 CANVENIENT_API int can_open(int index, enum can_baudrate baud);
@@ -108,7 +132,7 @@ CANVENIENT_API int can_get_name(int index, char* name_buf, size_t buf_size);
 
 CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud);
 
-CANVENIENT_API int can_send(int index, struct can_frame* frame);
+CANVENIENT_API int can_send(int index, const struct can_frame* frame);
 CANVENIENT_API int can_recv(int index, struct can_frame* frame, u64* timestamp);
 
 #endif /* CANVENIENT_H */

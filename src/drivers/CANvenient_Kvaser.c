@@ -233,7 +233,7 @@ int kvaser_send(int index, const struct can_frame* frame)
     kvaser_channel_info_t* ch_info = (kvaser_channel_info_t*)can_interface[index].internal;
     canStatus status;
 
-    status = canWrite(ch_info->handle, (long)frame->can_id, frame->data, frame->can_dlc, canMSG_STD);
+    status = canWrite(ch_info->handle, (long)frame->can_id, (void*)frame->data, frame->can_dlc, canMSG_STD);
     if (status < 0)
     {
         set_error_reason(get_canlib_error_text(status));
