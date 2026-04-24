@@ -25,39 +25,14 @@ char can_error_reason[1024] = {0};
 
 CANVENIENT_API int can_find_interfaces(void)
 {
-    int status;
+    ixxat_find_interfaces();
+    peak_find_interfaces();
+    kvaser_find_interfaces();
+    socketcan_find_interfaces();
+    tinycan_find_interfaces();
+    softing_find_interfaces();
 
-    status = ixxat_find_interfaces();
-    if (status < 0)
-    {
-        return status;
-    }
-
-    status = peak_find_interfaces();
-    if (status < 0)
-    {
-        return status;
-    }
-
-    status = kvaser_find_interfaces();
-    if (status < 0)
-    {
-        return status;
-    }
-
-    status = socketcan_find_interfaces();
-    if (status < 0)
-    {
-        return status;
-    }
-
-    status = tinycan_find_interfaces();
-    if (status < 0)
-    {
-        return status;
-    }
-
-    return softing_find_interfaces();
+    return 0;
 }
 
 CANVENIENT_API void can_release_interfaces(void)
@@ -176,7 +151,6 @@ CANVENIENT_API int can_update(int index)
             return peak_update(index);
         case CAN_VENDOR_SOCKETCAN:
             return socketcan_update(index);
-            break;
         case CAN_VENDOR_SOFTING:
             return softing_update(index);
         case CAN_VENDOR_MHS:
@@ -279,7 +253,7 @@ CANVENIENT_API int can_set_baudrate(int index, enum can_baudrate baud)
     }
 }
 
-CANVENIENT_API int can_send(int index, struct can_frame* frame)
+CANVENIENT_API int can_send(int index, const struct can_frame* frame)
 {
     if (index < 0 || index >= CAN_MAX_INTERFACES)
     {

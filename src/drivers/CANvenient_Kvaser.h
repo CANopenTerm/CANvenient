@@ -19,5 +19,5 @@ int kvaser_update(int index);
 
 int kvaser_set_baudrate(int index, enum can_baudrate baud);
 
-int kvaser_send(int index, struct can_frame* frame);
+int kvaser_send(int index, const struct can_frame* frame);
 int kvaser_recv(int index, struct can_frame* frame, u64* timestamp);

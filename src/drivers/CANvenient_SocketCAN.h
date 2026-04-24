@@ -18,5 +18,5 @@ int socketcan_update(int index);
 
 int socketcan_set_baudrate(int index, enum can_baudrate baud);
 
-int socketcan_send(int index, struct can_frame* frame);
+int socketcan_send(int index, const struct can_frame* frame);
 int socketcan_recv(int index, struct can_frame* frame, u64* timestamp);

@@ -318,7 +318,7 @@ int socketcan_set_baudrate(int index, enum can_baudrate baud)
 #endif
 }
 
-int socketcan_send(int index, struct can_frame* frame)
+int socketcan_send(int index, const struct can_frame* frame)
 {
 #ifdef __linux__
 

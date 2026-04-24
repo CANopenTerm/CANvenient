@@ -315,7 +315,7 @@ int softing_set_baudrate(int index, enum can_baudrate baud)
 #endif
 }
 
-int softing_send(int index, struct can_frame* frame)
+int softing_send(int index, const struct can_frame* frame)
 {
 #ifdef _WIN32
 

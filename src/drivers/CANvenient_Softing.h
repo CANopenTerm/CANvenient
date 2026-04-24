@@ -19,5 +19,5 @@ int softing_update(int index);
 
 int softing_set_baudrate(int index, enum can_baudrate baud);
 
-int softing_send(int index, struct can_frame* frame);
+int softing_send(int index, const struct can_frame* frame);
 int softing_recv(int index, struct can_frame* frame, u64* timestamp);

@@ -24,7 +24,7 @@ typedef struct ixxat_ctx
 {
     VCIID device_id;
     u32 bus_no;
-    ICanChannel* pChannel;
+    ICanObject* pCanObject;
     IFifoReader* pReader;
     IFifoWriter* pWriter;
 
@@ -69,7 +69,7 @@ int ixxat_find_interfaces(void)
                         {
                             for (u32 bus = 0; bus < features.BusSocketCount; bus++)
                             {
-                                if (features.BusSocketType[bus])
+                                if (VCI_BUS_TYPE(features.BusSocketType[bus]) == VCI_BUS_CAN)
                                 {
                                     ixxat_ctx_t* ctx;
                                     char socket_name[256];
@@ -95,8 +95,8 @@ int ixxat_find_interfaces(void)
 
                                     if (0 != find_free_interface_slot(&free_index))
                                     {
-                                        /* No free slot available: skip. */
-                                        continue;
+                                        /* No free slot available: stop. */
+                                        break;
                                     }
 
                                     name_len = strnlen(socket_name, sizeof(socket_name));
@@ -116,7 +116,7 @@ int ixxat_find_interfaces(void)
                                     }
                                     ctx->device_id = devInfo.VciObjectId;
                                     ctx->bus_no = bus;
-                                    ctx->pChannel = NULL;
+                                    ctx->pCanObject = NULL;
                                     ctx->pReader = NULL;
                                     ctx->pWriter = NULL;
 
@@ -151,9 +151,7 @@ int ixxat_open(int index)
     IVciDeviceManager* pDevMan = NULL;
     IVciDevice* pDevice = NULL;
     IBalObject* pBal = NULL;
-    ICanControl* pControl = NULL;
-    ICanSocket* pSocket = NULL;
-    ICanChannel* pChannel = NULL;
+    ICanObject* pCanObj = NULL;
     CANINITLINE initLine;
     HRESULT hr;
     u8 bt0;
@@ -185,57 +183,47 @@ int ixxat_open(int index)
     pDevice->lpVtbl->Release(pDevice);
     if (FAILED(hr) || NULL == pBal)
     {
+        set_error_reason("Failed to open BAL component.");
         return -1;
     }
 
-    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanControl, (PVOID*)&pControl);
-    if (SUCCEEDED(hr) && NULL != pControl)
-    {
-        ixxat_baudrate_to_btr(can_interface[index].baudrate, &bt0, &bt1);
-        initLine.bOpMode = CAN_OPMODE_STANDARD | CAN_OPMODE_EXTENDED | CAN_OPMODE_ERRFRAME;
-        initLine.bReserved = 0;
-        initLine.bBtReg0 = bt0;
-        initLine.bBtReg1 = bt1;
-        pControl->lpVtbl->InitLine(pControl, &initLine);
-        pControl->lpVtbl->StartLine(pControl);
-        pControl->lpVtbl->Release(pControl);
-    }
-
-    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanSocket, (PVOID*)&pSocket);
+    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanObject, (PVOID*)&pCanObj);
     pBal->lpVtbl->Release(pBal);
-    if (FAILED(hr) || NULL == pSocket)
+    if (FAILED(hr) || NULL == pCanObj)
     {
-        set_error_reason("Failed to open CAN socket.");
+        set_error_reason("Failed to open CAN object.");
         return -1;
     }
 
-    hr = pSocket->lpVtbl->CreateChannel(pSocket, FALSE, &pChannel);
-    pSocket->lpVtbl->Release(pSocket);
-    if (FAILED(hr) || NULL == pChannel)
-    {
-        set_error_reason("Failed to create CAN channel.");
-        return -1;
-    }
+    ixxat_baudrate_to_btr(can_interface[index].baudrate, &bt0, &bt1);
+    initLine.bOpMode   = CAN_OPMODE_STANDARD | CAN_OPMODE_EXTENDED | CAN_OPMODE_ERRFRAME;
+    initLine.bReserved = 0;
+    initLine.bBtReg0   = bt0;
+    initLine.bBtReg1   = bt1;
 
-    hr = pChannel->lpVtbl->Initialize(pChannel, 1024, 128);
+    pCanObj->lpVtbl->ResetLine(pCanObj);
+    hr = pCanObj->lpVtbl->InitLine(pCanObj, &initLine, 1024, 128);
     if (FAILED(hr))
     {
-        pChannel->lpVtbl->Release(pChannel);
-        set_error_reason("Failed to initialize CAN channel.");
+        pCanObj->lpVtbl->Release(pCanObj);
+        set_error_reason("Failed to initialize CAN line.");
         return -1;
     }
 
-    hr = pChannel->lpVtbl->Activate(pChannel);
+    pCanObj->lpVtbl->SetAccFilter(pCanObj, CAN_FILTER_STD, CAN_ACC_CODE_ALL, CAN_ACC_MASK_ALL);
+    pCanObj->lpVtbl->SetAccFilter(pCanObj, CAN_FILTER_EXT, CAN_ACC_CODE_ALL, CAN_ACC_MASK_ALL);
+
+    hr = pCanObj->lpVtbl->StartLine(pCanObj);
     if (FAILED(hr))
     {
-        pChannel->lpVtbl->Release(pChannel);
-        set_error_reason("Failed to activate CAN channel.");
+        pCanObj->lpVtbl->Release(pCanObj);
+        set_error_reason("Failed to start CAN line.");
         return -1;
     }
 
-    pChannel->lpVtbl->GetReader(pChannel, &ctx->pReader);
-    pChannel->lpVtbl->GetWriter(pChannel, &ctx->pWriter);
-    ctx->pChannel = pChannel;
+    pCanObj->lpVtbl->GetReceiveFifo(pCanObj, &ctx->pReader);
+    pCanObj->lpVtbl->GetTransmitFifo(pCanObj, &ctx->pWriter);
+    ctx->pCanObject = pCanObj;
     can_interface[index].opened = 1;
 
     return 0;
@@ -264,13 +252,14 @@ void ixxat_close(int index)
             ctx->pReader->lpVtbl->Release(ctx->pReader);
             ctx->pReader = NULL;
         }
-        if (ctx->pChannel)
+        if (ctx->pCanObject)
         {
-            ctx->pChannel->lpVtbl->Deactivate(ctx->pChannel);
-            ctx->pChannel->lpVtbl->Release(ctx->pChannel);
-            ctx->pChannel = NULL;
+            ctx->pCanObject->lpVtbl->StopLine(ctx->pCanObject);
+            ctx->pCanObject->lpVtbl->Release(ctx->pCanObject);
+            ctx->pCanObject = NULL;
         }
     }
+    can_interface[index].opened = 0;
 
 #else
     set_error_reason("Ixxat driver is only supported on Windows.");
@@ -326,9 +315,7 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
     IVciDeviceManager* pDevMan = NULL;
     IVciDevice* pDevice = NULL;
     IBalObject* pBal = NULL;
-    ICanControl* pControl = NULL;
-    ICanSocket* pSocket = NULL;
-    ICanChannel* pChannel = NULL;
+    ICanObject* pCanObj = NULL;
     CANINITLINE initLine;
     HRESULT hr;
     u8 bt0;
@@ -340,7 +327,7 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
         return -1;
     }
 
-    /* Release existing channel resources. */
+    /* Release existing resources. */
     if (ctx->pWriter)
     {
         ctx->pWriter->lpVtbl->Release(ctx->pWriter);
@@ -351,39 +338,11 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
         ctx->pReader->lpVtbl->Release(ctx->pReader);
         ctx->pReader = NULL;
     }
-    if (ctx->pChannel)
+    if (ctx->pCanObject)
     {
-        ctx->pChannel->lpVtbl->Deactivate(ctx->pChannel);
-        ctx->pChannel->lpVtbl->Release(ctx->pChannel);
-        ctx->pChannel = NULL;
-    }
-
-    /* Stop the CAN line before changing baudrate. */
-    hr = VciGetDeviceManager(&pDevMan);
-    if (SUCCEEDED(hr) && NULL != pDevMan)
-    {
-        hr = pDevMan->lpVtbl->OpenDevice(pDevMan, &ctx->device_id, &pDevice);
-        if (SUCCEEDED(hr) && NULL != pDevice)
-        {
-            hr = pDevice->lpVtbl->OpenComponent(pDevice, &CLSID_VCIBAL, &IID_IBalObject, (PVOID*)&pBal);
-            if (SUCCEEDED(hr) && NULL != pBal)
-            {
-                hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanControl, (PVOID*)&pControl);
-                if (SUCCEEDED(hr) && NULL != pControl)
-                {
-                    pControl->lpVtbl->StopLine(pControl);
-                    pControl->lpVtbl->ResetLine(pControl);
-                    pControl->lpVtbl->Release(pControl);
-                    pControl = NULL;
-                }
-                pBal->lpVtbl->Release(pBal);
-                pBal = NULL;
-            }
-            pDevice->lpVtbl->Release(pDevice);
-            pDevice = NULL;
-        }
-        pDevMan->lpVtbl->Release(pDevMan);
-        pDevMan = NULL;
+        ctx->pCanObject->lpVtbl->StopLine(ctx->pCanObject);
+        ctx->pCanObject->lpVtbl->Release(ctx->pCanObject);
+        ctx->pCanObject = NULL;
     }
 
     hr = VciGetDeviceManager(&pDevMan);
@@ -409,54 +368,43 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
         return -1;
     }
 
-    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanControl, (PVOID*)&pControl);
-    if (SUCCEEDED(hr) && NULL != pControl)
-    {
-        ixxat_baudrate_to_btr(baud, &bt0, &bt1);
-        initLine.bOpMode = CAN_OPMODE_STANDARD | CAN_OPMODE_EXTENDED | CAN_OPMODE_ERRFRAME;
-        initLine.bReserved = 0;
-        initLine.bBtReg0 = bt0;
-        initLine.bBtReg1 = bt1;
-        pControl->lpVtbl->InitLine(pControl, &initLine);
-        pControl->lpVtbl->StartLine(pControl);
-        pControl->lpVtbl->Release(pControl);
-    }
-
-    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanSocket, (PVOID*)&pSocket);
+    hr = pBal->lpVtbl->OpenSocket(pBal, ctx->bus_no, &IID_ICanObject, (PVOID*)&pCanObj);
     pBal->lpVtbl->Release(pBal);
-    if (FAILED(hr) || NULL == pSocket)
+    if (FAILED(hr) || NULL == pCanObj)
     {
-        set_error_reason("Failed to open CAN socket.");
+        set_error_reason("Failed to open CAN object.");
         return -1;
     }
 
-    hr = pSocket->lpVtbl->CreateChannel(pSocket, FALSE, &pChannel);
-    pSocket->lpVtbl->Release(pSocket);
-    if (FAILED(hr) || NULL == pChannel)
-    {
-        set_error_reason("Failed to create CAN channel.");
-        return -1;
-    }
+    ixxat_baudrate_to_btr(baud, &bt0, &bt1);
+    initLine.bOpMode   = CAN_OPMODE_STANDARD | CAN_OPMODE_EXTENDED | CAN_OPMODE_ERRFRAME;
+    initLine.bReserved = 0;
+    initLine.bBtReg0   = bt0;
+    initLine.bBtReg1   = bt1;
 
-    hr = pChannel->lpVtbl->Initialize(pChannel, 1024, 128);
+    pCanObj->lpVtbl->ResetLine(pCanObj);
+    hr = pCanObj->lpVtbl->InitLine(pCanObj, &initLine, 1024, 128);
     if (FAILED(hr))
     {
-        pChannel->lpVtbl->Release(pChannel);
-        set_error_reason("Failed to initialize CAN channel.");
+        pCanObj->lpVtbl->Release(pCanObj);
+        set_error_reason("Failed to initialize CAN line.");
         return -1;
     }
 
-    hr = pChannel->lpVtbl->Activate(pChannel);
+    pCanObj->lpVtbl->SetAccFilter(pCanObj, CAN_FILTER_STD, CAN_ACC_CODE_ALL, CAN_ACC_MASK_ALL);
+    pCanObj->lpVtbl->SetAccFilter(pCanObj, CAN_FILTER_EXT, CAN_ACC_CODE_ALL, CAN_ACC_MASK_ALL);
+
+    hr = pCanObj->lpVtbl->StartLine(pCanObj);
     if (FAILED(hr))
     {
-        pChannel->lpVtbl->Release(pChannel);
-        set_error_reason("Failed to activate CAN channel.");
+        pCanObj->lpVtbl->Release(pCanObj);
+        set_error_reason("Failed to start CAN line.");
         return -1;
     }
 
-    pChannel->lpVtbl->GetReader(pChannel, &ctx->pReader);
-    pChannel->lpVtbl->GetWriter(pChannel, &ctx->pWriter);
-    ctx->pChannel = pChannel;
+    pCanObj->lpVtbl->GetReceiveFifo(pCanObj, &ctx->pReader);
+    pCanObj->lpVtbl->GetTransmitFifo(pCanObj, &ctx->pWriter);
+    ctx->pCanObject = pCanObj;
     can_interface[index].baudrate = baud;
 
     return 0;
@@ -469,7 +417,7 @@ int ixxat_set_baudrate(int index, enum can_baudrate baud)
 #endif
 }
 
-int ixxat_send(int index, struct can_frame* frame)
+int ixxat_send(int index, const struct can_frame* frame)
 {
 #ifdef _WIN32
 
@@ -486,7 +434,8 @@ int ixxat_send(int index, struct can_frame* frame)
 
     msg.dwMsgId = frame->can_id;
     msg.uMsgInfo.Bytes.bType = CAN_MSGTYPE_DATA;
-    msg.uMsgInfo.Bytes.bFlags = (frame->can_dlc & CAN_MSGFLAGS_DLC);
+    msg.uMsgInfo.Bytes.bFlags = (frame->can_dlc & CAN_MSGFLAGS_DLC) |
+                                 (frame->can_id > 0x7FF ? CAN_MSGFLAGS_EXT : 0);
 
     for (i = 0; i < frame->can_dlc && i < 8; i += 1)
     {
@@ -525,18 +474,14 @@ int ixxat_recv(int index, struct can_frame* frame, u64* timestamp)
         return -1;
     }
 
-    hr = ctx->pReader->lpVtbl->GetDataEntry(ctx->pReader, &msg);
-    if (S_OK != hr)
+    do
     {
-        set_error_reason("No message available.");
-        return -1;
-    }
-
-    if (CAN_MSGTYPE_DATA != msg.uMsgInfo.Bytes.bType)
-    {
-        set_error_reason("No message available.");
-        return -1;
-    }
+        hr = ctx->pReader->lpVtbl->GetDataEntry(ctx->pReader, &msg);
+        if (S_OK != hr)
+        {
+            return -1;
+        }
+    } while (CAN_MSGTYPE_DATA != msg.uMsgInfo.Bytes.bType);
 
     frame->can_id = msg.dwMsgId;
     frame->can_dlc = msg.uMsgInfo.Bytes.bFlags & CAN_MSGFLAGS_DLC;

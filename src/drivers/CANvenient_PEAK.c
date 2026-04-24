@@ -214,7 +214,7 @@ int peak_set_baudrate(int index, enum can_baudrate baud)
 #endif
 }
 
-int peak_send(int index, struct can_frame* frame)
+int peak_send(int index, const struct can_frame* frame)
 {
 #ifdef _WIN32
 
