@@ -27,8 +27,7 @@ if(WIN32)
 
     BUILD_COMMAND ${CMAKE_COMMAND} -E echo "Skipping build step."
 
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy
-      ${IXXAT_PATH}/sdk/vci/bin/${IXXAT_PLATFORM}/release/vciapi.dll ${CMAKE_CURRENT_BINARY_DIR}/
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "Skipping install step."
 
     PATCH_COMMAND ${CMAKE_COMMAND} -E copy
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dep_ixxat.cmake" ${IXXAT_PATH}/CMakeLists.txt

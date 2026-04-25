@@ -8,8 +8,12 @@
  *
  **/
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #include "CANvenient.h"
 #include "drivers/CANvenient_internal.h"
@@ -18,6 +22,11 @@
 #include "drivers/CANvenient_SocketCAN.h"
 #include "drivers/CANvenient_Softing.h"
 #include "drivers/CANvenient_PEAK.h"
+
+#ifdef _WIN32
+static HMODULE vciapi_dll_handle = NULL;
+static bool is_vciapi_dll_available = false;
+#endif
 
 struct can_iface can_interface[CAN_MAX_INTERFACES] = {0};
 char can_error_reason[1024] = {0};
@@ -29,10 +38,37 @@ CANVENIENT_API int can_find_interfaces_mask(u32 vendor_mask)
         return 0;
     }
 
-    if (vendor_mask & CAN_VENDOR_IXXAT)
+#ifdef _WIN32
+    static bool once_checked_vciapi_dll = false;
+
+    // https://github.com/CANopenTerm/CANopenTerm/issues/109#issuecomment-4320171025
+    if (! once_checked_vciapi_dll)
+    {
+        if (GetFileAttributesA("vciapi.dll") != INVALID_FILE_ATTRIBUTES)
+        {
+            vciapi_dll_handle = LoadLibraryA("vciapi.dll");
+            if (! vciapi_dll_handle)
+            {
+                puts("vciapi.dll not found. Ixxat interfaces will be ignored.");
+                is_vciapi_dll_available = false;
+            }
+            else
+            {
+                is_vciapi_dll_available = true;
+            }
+        }
+        else
+        {
+            puts("vciapi.dll not found. Ixxat interfaces will be ignored.");
+        }
+
+        once_checked_vciapi_dll = true;
+    }
+    if (vendor_mask & CAN_VENDOR_IXXAT && is_vciapi_dll_available)
     {
         ixxat_find_interfaces();
     }
+
     if (vendor_mask & CAN_VENDOR_PEAK)
     {
         peak_find_interfaces();
@@ -41,13 +77,16 @@ CANVENIENT_API int can_find_interfaces_mask(u32 vendor_mask)
     {
         kvaser_find_interfaces();
     }
-    if (vendor_mask & CAN_VENDOR_SOCKETCAN)
-    {
-        socketcan_find_interfaces();
-    }
+
     if (vendor_mask & CAN_VENDOR_SOFTING)
     {
         softing_find_interfaces();
+    }
+#endif
+
+    if (vendor_mask & CAN_VENDOR_SOCKETCAN)
+    {
+        socketcan_find_interfaces();
     }
 
     return 0;

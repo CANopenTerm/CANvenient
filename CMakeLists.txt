@@ -24,12 +24,21 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/deps.cmake)
 
 target_link_libraries(
   ${PROJECT_NAME}
+  PRIVATE
   ${PLATFORM_LIBS}
 )
+
+if(WIN32 AND MSVC)
+  # Ensure the library can be loaded without vciapi.dll present.
+  # vciapi.dll will only be loaded when an Ixxat (VCI) function is called.
+  target_link_options(${PROJECT_NAME} PRIVATE /DELAYLOAD:vciapi.dll)
+  target_link_libraries(${PROJECT_NAME} PRIVATE delayimp)
+endif()
 
 if(UNIX)
   target_link_libraries(
     ${PROJECT_NAME}
+    PRIVATE
     socketcan
   )
 
