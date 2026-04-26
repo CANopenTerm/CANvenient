@@ -44,20 +44,26 @@ CANVENIENT_API int can_find_interfaces_mask(u32 vendor_mask)
     // https://github.com/CANopenTerm/CANopenTerm/issues/109#issuecomment-4320171025
     if (! once_checked_vciapi_dll)
     {
-        if (GetFileAttributesA("vciapi.dll") != INVALID_FILE_ATTRIBUTES)
+        static const char* vciapi_search_paths[] = {
+            "vciapi.dll",
+            "C:\\Program Files\\HMS\\Ixxat VCI\\sdk\\vci\\bin\\x64\\release\\vciapi.dll",
+            NULL
+        };
+
+        for (int p = 0; vciapi_search_paths[p] != NULL; p++)
         {
-            vciapi_dll_handle = LoadLibraryA("vciapi.dll");
-            if (! vciapi_dll_handle)
+            if (GetFileAttributesA(vciapi_search_paths[p]) != INVALID_FILE_ATTRIBUTES)
             {
-                puts("vciapi.dll not found. Ixxat interfaces will be ignored.");
-                is_vciapi_dll_available = false;
-            }
-            else
-            {
-                is_vciapi_dll_available = true;
+                vciapi_dll_handle = LoadLibraryA(vciapi_search_paths[p]);
+                if (vciapi_dll_handle)
+                {
+                    is_vciapi_dll_available = true;
+                    break;
+                }
             }
         }
-        else
+
+        if (! is_vciapi_dll_available)
         {
             puts("vciapi.dll not found. Ixxat interfaces will be ignored.");
         }
