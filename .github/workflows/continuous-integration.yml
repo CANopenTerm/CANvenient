@@ -41,7 +41,52 @@ jobs:
         with:
           arch: x64
 
-      - name: Build
+      - name: Build x64
         run: |
-          cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build
+          cmake -G "Ninja" -B build_x64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build_x64
+
+      - name: Build x86
+        run: |
+          cmake -G "Ninja" -B build_x86 -DCMAKE_BUILD_TYPE=Release -A Win32
+          cmake --build build_x86
+
+      - name: Get short Git hash
+        id: git_hash
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $env:GITHUB_OUTPUT
+
+      - name: Stage artifact layout
+        run: |
+          $root = "CANvenient"
+          New-Item -ItemType Directory -Force -Path "$root/bin/x64"
+          New-Item -ItemType Directory -Force -Path "$root/bin/x86"
+          New-Item -ItemType Directory -Force -Path "$root/include"
+          New-Item -ItemType Directory -Force -Path "$root/lib/x64"
+          New-Item -ItemType Directory -Force -Path "$root/lib/x86"
+
+          Copy-Item build_x64/CANvenient.dll  "$root/bin/x64/CANvenient.dll"
+          Copy-Item build_x64/CANvenient.lib  "$root/lib/x64/CANvenient.lib"
+          Copy-Item build_x86/CANvenient.dll  "$root/bin/x86/CANvenient.dll"
+          Copy-Item build_x86/CANvenient.lib  "$root/lib/x86/CANvenient.lib"
+
+          $vendorDlls_x64 = @("canchd_64.dll","canL2_64.dll","canlib32.dll","CANusbM.dll","PCANBasic.dll","vciapi.dll")
+          foreach ($dll in $vendorDlls_x64) {
+            if (Test-Path "build_x64/$dll") { Copy-Item "build_x64/$dll" "$root/bin/x64/$dll" }
+          }
+
+          $vendorDlls_x86 = @("canchd_64.dll","canL2.dll","canlib32.dll","CANusbM.dll","PCANBasic.dll")
+          foreach ($dll in $vendorDlls_x86) {
+            if (Test-Path "build_x86/$dll") { Copy-Item "build_x86/$dll" "$root/bin/x86/$dll" }
+          }
+
+          Copy-Item include/CANvenient.h "$root/include/CANvenient.h"
+          Copy-Item LICENSE.md           "$root/LICENSE.md"
+          Copy-Item README.md            "$root/README.md"
+
+          Compress-Archive -Path "$root" -DestinationPath "CANvenient-${{ steps.git_hash.outputs.sha }}.zip"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: build-artifacts
+          path: CANvenient-${{ steps.git_hash.outputs.sha }}.zip
