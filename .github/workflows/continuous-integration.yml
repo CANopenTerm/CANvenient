@@ -73,7 +73,7 @@ jobs:
           Copy-Item build_x86/CANvenient.dll  "$root/bin/x86/CANvenient.dll"
           Copy-Item build_x86/CANvenient.lib  "$root/lib/x86/CANvenient.lib"
 
-          $vendorDlls_x64 = @("canchd_64.dll","canL2_64.dll","canlib32.dll","CANusbM.dll","PCANBasic.dll","vciapi.dll")
+          $vendorDlls_x64 = @("canchd_64.dll","canL2_64.dll","canlib32.dll","CANusbM.dll","PCANBasic.dll")
           foreach ($dll in $vendorDlls_x64) {
             if (Test-Path "build_x64/$dll") { Copy-Item "build_x64/$dll" "$root/bin/x64/$dll" }
           }
