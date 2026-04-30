@@ -46,9 +46,13 @@ jobs:
           cmake -G "Ninja" -B build_x64 -DCMAKE_BUILD_TYPE=Release
           cmake --build build_x64
 
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x86
+
       - name: Build x86
         run: |
-          cmake -G "Ninja" -B build_x86 -DCMAKE_BUILD_TYPE=Release -A Win32
+          cmake -G "Ninja" -B build_x86 -DCMAKE_BUILD_TYPE=Release
           cmake --build build_x86
 
       - name: Get short Git hash
