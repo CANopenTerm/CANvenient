@@ -3,7 +3,7 @@
  *  CANvenient is an abstraction layer for multiple CAN APIs on
  *  Windows and Linux.
  *
- *  Copyright (c) 2026, Michael Fitzmayer. All rights reserved.
+ *  Copyright (c) 2022-2026, Michael Fitzmayer. All rights reserved.
  *  SPDX-License-Identifier: MIT
  *
  **/
