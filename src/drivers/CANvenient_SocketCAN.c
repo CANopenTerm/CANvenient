@@ -20,6 +20,7 @@ void socketcan_close(int index);
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/time.h>
 #include <net/if.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
